@@ -1,0 +1,580 @@
+import React, { useState } from 'react';
+import { Plus, Baby, Clock, Droplets, X, Check, Moon } from 'lucide-react';
+
+const FeedMeApp = () => {
+  const [currentScreen, setCurrentScreen] = useState('home');
+  const [selectedTime, setSelectedTime] = useState({ hour: 9, minute: 48, period: 'PM' });
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedOunces, setSelectedOunces] = useState(null);
+  const [customOunces, setCustomOunces] = useState('');
+  const [notes, setNotes] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState('Day');
+
+  // START WITH EMPTY DATA - Users begin fresh
+  const [allFeedings, setAllFeedings] = useState([]);
+
+  // Get today's date for new feedings
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Get today's feedings
+  const todaysFeedings = allFeedings.filter(f => f.date === getTodayDate());
+  
+  // Group feedings by date for display
+  const feedingsByDate = allFeedings.reduce((acc, feeding) => {
+    if (!acc[feeding.date]) {
+      acc[feeding.date] = [];
+    }
+    acc[feeding.date].push(feeding);
+    return acc;
+  }, {});
+
+  // Get unique dates in reverse chronological order
+  const dates = Object.keys(feedingsByDate).sort().reverse();
+
+  const totalOunces = todaysFeedings.reduce((sum, feeding) => sum + feeding.ounces, 0);
+  const timeSinceLastFeeding = todaysFeedings.length > 0 ? "Just added" : "No feedings yet";
+
+  const presetOunces = [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7];
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (dateString === today.toISOString().split('T')[0]) {
+      return `Today • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    } else if (dateString === yesterday.toISOString().split('T')[0]) {
+      return `Yesterday • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+  };
+
+  // Calculate simple gap between feedings
+  const calculateGap = (currentIndex) => {
+    if (currentIndex >= todaysFeedings.length - 1) return null;
+    // Simplified gap calculation - in real app you'd calculate actual time difference
+    return "2h 30m";
+  };
+
+  // Basic totals data - calculated from actual feedings
+  const totalsData = {
+    Day: {
+      totalOunces: totalOunces,
+      averageGap: todaysFeedings.length > 1 ? '2h 30m' : '—',
+      longestOvernightGap: '—'
+    },
+    'Week 7': {
+      totalOunces: 0,
+      dailyAverage: 0,
+      averageGap: '—',
+      longestOvernightGap: '—'
+    },
+    Overall: {
+      totalOunces: allFeedings.reduce((sum, f) => sum + f.ounces, 0),
+      dailyAverage: 0,
+      averageGap: '—',
+      longestOvernightGap: '—',
+      weeklyBreakdown: []
+    }
+  };
+
+  const handleSaveFeeding = () => {
+    const ounces = selectedOunces || parseFloat(customOunces) || 0;
+    if (ounces > 0) {
+      const timeString = `${selectedTime.hour}:${selectedTime.minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+      const newFeeding = {
+        id: Date.now(),
+        date: getTodayDate(),
+        time: timeString,
+        ounces: ounces,
+        gap: todaysFeedings.length > 0 ? calculateGap(0) : null
+      };
+      setAllFeedings([newFeeding, ...allFeedings]);
+    }
+    
+    // Reset form
+    setSelectedOunces(null);
+    setCustomOunces('');
+    setNotes('');
+    setShowTimePicker(false);
+    setCurrentScreen('home');
+  };
+
+  const handleCancelFeeding = () => {
+    setSelectedOunces(null);
+    setCustomOunces('');
+    setNotes('');
+    setShowTimePicker(false);
+    setCurrentScreen('home');
+  };
+
+  // Header Component
+  const Header = () => (
+    <div className="bg-white p-4 border-b border-gray-100">
+      <div className="flex items-center justify-center gap-3">
+        <div className="bg-rose-500 p-2 rounded-full">
+          <Baby className="text-white" size={24} />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-800">Feed Me</h1>
+      </div>
+    </div>
+  );
+
+  // Bottom Navigation
+  const BottomNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+      <div className="max-w-md mx-auto flex">
+        <button 
+          onClick={() => setCurrentScreen('home')}
+          className={`flex-1 py-3 text-center font-medium ${
+            currentScreen === 'home' 
+              ? 'bg-rose-500 text-white' 
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          Home
+        </button>
+        <button 
+          onClick={() => setCurrentScreen('totals')}
+          className={`flex-1 py-3 text-center font-medium ${
+            currentScreen === 'totals' 
+              ? 'bg-rose-500 text-white' 
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          Totals
+        </button>
+      </div>
+    </div>
+  );
+
+  // Home Screen
+  const HomeScreen = () => (
+    <div className="pb-16">
+      <Header />
+      
+      {/* Daily Summary */}
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Droplets size={24} />
+            <div>
+              <p className="text-blue-100 text-sm">Total Today</p>
+              <p className="text-2xl font-bold">{totalOunces} oz</p>
+            </div>
+          </div>
+          <div className="text-right flex items-center gap-2">
+            <Clock size={20} />
+            <div>
+              <p className="text-blue-100 text-sm">Last Feeding</p>
+              <p className="text-lg font-semibold">{timeSinceLastFeeding}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Feeding Button */}
+      <div className="p-4">
+        <button 
+          onClick={() => setCurrentScreen('addFeeding')}
+          className="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 shadow-lg transition-colors"
+        >
+          <Plus size={24} />
+          <span className="text-lg">Add Feeding</span>
+        </button>
+      </div>
+
+      {/* Feeding List with Date Headers */}
+      <div className="px-4 pb-4">
+        {dates.length === 0 ? (
+          <div className="text-center py-8">
+            <Baby className="mx-auto mb-4 text-gray-300" size={48} />
+            <p className="text-gray-500">No feedings yet</p>
+            <p className="text-sm text-gray-400">Tap "Add Feeding" to get started</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {dates.map((date) => (
+              <div key={date}>
+                {/* Date Header */}
+                <div className="sticky top-0 bg-white py-3 border-b border-gray-200 mb-3">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {formatDate(date)}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {feedingsByDate[date].reduce((sum, f) => sum + f.ounces, 0)} oz total
+                  </p>
+                </div>
+                
+                {/* Feedings for this date */}
+                <div className="space-y-3">
+                  {feedingsByDate[date].map((feeding) => (
+                    <div key={feeding.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-rose-100 p-2 rounded-full">
+                            <Baby className="text-rose-600" size={20} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {feeding.ounces}oz bottle
+                            </p>
+                            <p className="text-sm text-gray-600">{feeding.time}</p>
+                          </div>
+                        </div>
+                        
+                        {feeding.gap && (
+                          <div className="bg-rose-50 px-3 py-1 rounded-full">
+                            <p className="text-sm font-medium text-rose-700">{feeding.gap}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Add Feeding Screen
+  const AddFeedingScreen = () => (
+    <div className="pb-24">
+      {/* Header */}
+      <div className="bg-white p-4 border-b border-gray-100 flex items-center justify-between">
+        <button onClick={handleCancelFeeding} className="p-2">
+          <X size={24} className="text-gray-600" />
+        </button>
+        <h1 className="text-xl font-semibold text-gray-800">Add Feeding</h1>
+        <div className="w-10"></div>
+      </div>
+
+      <div className="p-6 space-y-8">
+        {/* Time Selection */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={20} className="text-blue-500" />
+            <label className="text-lg font-medium text-gray-800">Time</label>
+          </div>
+          
+          <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+            <button
+              onClick={() => setShowTimePicker(true)}
+              className="w-full text-center"
+            >
+              <p className="text-sm text-blue-600 mb-2">Start Time:</p>
+              <p className="text-2xl font-bold text-blue-700">
+                Today, {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Ounces Selection */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Droplets size={20} className="text-blue-500" />
+            <label className="text-lg font-medium text-gray-800">Ounces</label>
+            <span className="text-sm text-gray-500">(optional)</span>
+          </div>
+
+          {/* Preset Buttons */}
+          <div className="grid grid-cols-5 gap-2 mb-4">
+            {presetOunces.map((ounce) => (
+              <button
+                key={ounce}
+                onClick={() => {
+                  setSelectedOunces(ounce);
+                  setCustomOunces('');
+                }}
+                className={`py-3 px-2 rounded-lg font-medium transition-colors ${
+                  selectedOunces === ounce
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {ounce}oz
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Input */}
+          <div className="relative">
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Custom amount"
+              value={customOunces}
+              onChange={(e) => {
+                setCustomOunces(e.target.value);
+                setSelectedOunces(null);
+              }}
+              className="w-full p-4 border border-gray-300 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
+            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">oz</span>
+          </div>
+        </div>
+
+        {/* Notes Section */}
+        <div>
+          <label className="text-lg font-medium text-gray-800 mb-4 block">Notes (optional)</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any additional notes..."
+            rows={3}
+            className="w-full p-4 border border-gray-300 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Time Picker Modal */}
+      {showTimePicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-6 max-h-96">
+            <h3 className="text-xl font-semibold text-center mb-6">Start Time</h3>
+            
+            {/* Date/Time Display */}
+            <div className="text-center mb-6">
+              <div className="grid grid-cols-4 gap-2 text-center border-b border-gray-200 pb-4 mb-4">
+                <div className="text-sm text-gray-500">Sat Jun 21</div>
+                <div className="text-sm text-gray-500">6</div>
+                <div className="text-sm text-gray-500">45</div>
+                <div></div>
+                
+                <div className="text-sm text-gray-500">Sun Jun 22</div>
+                <div className="text-sm text-gray-500">7</div>
+                <div className="text-sm text-gray-500">46</div>
+                <div></div>
+                
+                <div className="text-sm text-gray-500">Mon Jun 23</div>
+                <div className="text-sm text-gray-500">8</div>
+                <div className="text-sm text-gray-500">47</div>
+                <div className="text-sm text-gray-500">AM</div>
+                
+                <div className="text-lg font-semibold text-gray-800 border-t-2 border-blue-500 pt-2">Today</div>
+                <div className="text-lg font-semibold text-gray-800 border-t-2 border-blue-500 pt-2">{selectedTime.hour}</div>
+                <div className="text-lg font-semibold text-gray-800 border-t-2 border-blue-500 pt-2">{selectedTime.minute.toString().padStart(2, '0')}</div>
+                <div className="text-lg font-semibold text-gray-800 border-t-2 border-blue-500 pt-2">{selectedTime.period}</div>
+                
+                <div className="text-sm text-gray-500">10</div>
+                <div className="text-sm text-gray-500">49</div>
+                <div></div>
+                <div></div>
+                
+                <div className="text-sm text-gray-500">11</div>
+                <div className="text-sm text-gray-500">50</div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+
+            {/* Time Controls */}
+            <div className="flex justify-center gap-8 mb-6">
+              {/* Hour */}
+              <div className="text-center">
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, hour: prev.hour === 12 ? 1 : prev.hour + 1}))}
+                  className="text-2xl text-blue-500 mb-2"
+                >
+                  +
+                </button>
+                <div className="text-3xl font-bold text-gray-800 mx-4">{selectedTime.hour}</div>
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, hour: prev.hour === 1 ? 12 : prev.hour - 1}))}
+                  className="text-2xl text-blue-500 mt-2"
+                >
+                  -
+                </button>
+              </div>
+
+              <div className="text-3xl font-bold text-gray-800 self-center">:</div>
+
+              {/* Minute */}
+              <div className="text-center">
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, minute: prev.minute === 59 ? 0 : prev.minute + 1}))}
+                  className="text-2xl text-blue-500 mb-2"
+                >
+                  +
+                </button>
+                <div className="text-3xl font-bold text-gray-800 mx-4">{selectedTime.minute.toString().padStart(2, '0')}</div>
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, minute: prev.minute === 0 ? 59 : prev.minute - 1}))}
+                  className="text-2xl text-blue-500 mt-2"
+                >
+                  -
+                </button>
+              </div>
+
+              {/* AM/PM */}
+              <div className="text-center">
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, period: prev.period === 'AM' ? 'PM' : 'AM'}))}
+                  className="text-2xl text-blue-500 mb-2"
+                >
+                  +
+                </button>
+                <div className="text-3xl font-bold text-gray-800 mx-4">{selectedTime.period}</div>
+                <button 
+                  onClick={() => setSelectedTime(prev => ({...prev, period: prev.period === 'AM' ? 'PM' : 'AM'}))}
+                  className="text-2xl text-blue-500 mt-2"
+                >
+                  -
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowTimePicker(false)}
+                className="flex-1 py-3 text-gray-600 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowTimePicker(false)}
+                className="flex-1 py-3 text-blue-500 font-medium"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+        <div className="max-w-md mx-auto space-y-3">
+          <button
+            onClick={handleSaveFeeding}
+            className="w-full bg-rose-500 hover:bg-rose-600 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 shadow-lg transition-colors"
+          >
+            <Check size={20} />
+            <span className="text-lg">Save Feeding</span>
+          </button>
+          
+          <button
+            onClick={handleCancelFeeding}
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Totals Screen
+  const TotalsScreen = () => {
+    const currentData = totalsData[selectedPeriod];
+    
+    return (
+      <div className="pb-16">
+        <Header />
+
+        {/* Period Selection */}
+        <div className="p-4 bg-gray-50">
+          <div className="flex bg-white rounded-xl p-1 shadow-sm">
+            {['Day', 'Week 7', 'Overall'].map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedPeriod(period)}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                  selectedPeriod === period
+                    ? 'bg-rose-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Totals Cards */}
+        <div className="p-4 space-y-4">
+          {/* Total Ounces */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-3 mb-2">
+              <Droplets size={24} />
+              <h3 className="text-lg font-semibold">
+                Total Ounces {selectedPeriod === 'Day' ? 'Today' : selectedPeriod === 'Week 7' ? 'This Week' : 'Overall'}
+              </h3>
+            </div>
+            <p className="text-3xl font-bold">{currentData.totalOunces} oz</p>
+            
+            {selectedPeriod !== 'Day' && (
+              <div className="mt-3 pt-3 border-t border-blue-400">
+                <p className="text-blue-100 text-sm">Daily Average</p>
+                <p className="text-xl font-semibold">{currentData.dailyAverage} oz</p>
+              </div>
+            )}
+          </div>
+
+          {/* Average Gap Between Feedings */}
+          <div className="bg-white border-2 border-gray-200 p-6 rounded-xl">
+            <div className="flex items-center gap-3 mb-2">
+              <Clock size={24} className="text-rose-500" />
+              <h3 className="text-lg font-semibold text-gray-800">Average Time Between Feedings</h3>
+            </div>
+            <p className="text-2xl font-bold text-gray-800">{currentData.averageGap}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Excludes gaps over 4 hours during daytime
+            </p>
+          </div>
+
+          {/* Nighttime Insights */}
+          <div className="bg-indigo-50 border-2 border-indigo-200 p-6 rounded-xl">
+            <div className="flex items-center gap-3 mb-2">
+              <Moon size={24} className="text-indigo-600" />
+              <h3 className="text-lg font-semibold text-gray-800">Nighttime Insights</h3>
+            </div>
+            <div>
+              <p className="text-indigo-600 text-sm mb-1">
+                Longest Overnight Gap {selectedPeriod === 'Day' ? 'Last Night' : selectedPeriod === 'Week 7' ? 'This Week' : 'Overall'}
+              </p>
+              <p className="text-2xl font-bold text-indigo-700">{currentData.longestOvernightGap}</p>
+              <p className="text-xs text-indigo-500 mt-1">7 PM - 7 AM</p>
+            </div>
+          </div>
+
+          {/* Empty state for no data */}
+          {allFeedings.length === 0 && (
+            <div className="bg-gray-50 border-2 border-gray-200 p-6 rounded-xl text-center">
+              <Baby className="mx-auto mb-3 text-gray-300" size={32} />
+              <p className="text-gray-500">No feeding data yet</p>
+              <p className="text-sm text-gray-400">Start adding feedings to see insights</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Main App Render
+  return (
+    <div className="max-w-md mx-auto bg-white min-h-screen">
+      {currentScreen === 'home' && <HomeScreen />}
+      {currentScreen === 'addFeeding' && <AddFeedingScreen />}
+      {currentScreen === 'totals' && <TotalsScreen />}
+      
+      {currentScreen !== 'addFeeding' && <BottomNav />}
+    </div>
+  );
+};
+
+export default FeedMeApp;
