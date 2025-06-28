@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Baby, Clock, Droplets, X, Check, Moon } from 'lucide-react';
+import { feedingService } from './feedingService';
 
 const FeedMeApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -10,8 +11,29 @@ const FeedMeApp = () => {
   const [notes, setNotes] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Day');
 
-  // START WITH EMPTY DATA - Users begin fresh
+  // State for feedings and loading
   const [allFeedings, setAllFeedings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load feedings from Supabase on component mount
+  useEffect(() => {
+    loadFeedings();
+  }, []);
+
+  const loadFeedings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const feedings = await feedingService.getAllFeedings();
+      setAllFeedings(feedings);
+    } catch (err) {
+      setError('Failed to load feedings');
+      console.error('Error loading feedings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get today's date for new feedings
   const getTodayDate = () => {
@@ -84,25 +106,35 @@ const FeedMeApp = () => {
     }
   };
 
-  const handleSaveFeeding = () => {
+  const handleSaveFeeding = async () => {
     const ounces = selectedOunces || parseFloat(customOunces) || 0;
     if (ounces > 0) {
-      const timeString = `${selectedTime.hour}:${selectedTime.minute.toString().padStart(2, '0')} ${selectedTime.period}`;
-      const newFeeding = {
-        id: Date.now(),
-        date: getTodayDate(),
-        time: timeString,
-        ounces: ounces,
-        gap: todaysFeedings.length > 0 ? calculateGap(0) : null
-      };
-      setAllFeedings([newFeeding, ...allFeedings]);
+      try {
+        setLoading(true);
+        const timeString = `${selectedTime.hour}:${selectedTime.minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+        const newFeeding = {
+          date: getTodayDate(),
+          time: timeString,
+          ounces: ounces,
+          notes: notes || null,
+          gap: todaysFeedings.length > 0 ? calculateGap(0) : null
+        };
+        
+        const savedFeeding = await feedingService.addFeeding(newFeeding);
+        setAllFeedings([savedFeeding, ...allFeedings]);
+        
+        setSelectedOunces(null);
+        setCustomOunces('');
+        setNotes('');
+        setShowTimePicker(false);
+        setCurrentScreen('home');
+      } catch (err) {
+        setError('Failed to save feeding');
+        console.error('Error saving feeding:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-    
-    setSelectedOunces(null);
-    setCustomOunces('');
-    setNotes('');
-    setShowTimePicker(false);
-    setCurrentScreen('home');
   };
 
   const handleCancelFeeding = () => {
@@ -537,10 +569,15 @@ const FeedMeApp = () => {
         <div style={styles.buttonContainer}>
           <button
             onClick={handleSaveFeeding}
-            style={styles.primaryBtn}
+            disabled={loading}
+            style={{
+              ...styles.primaryBtn,
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
           >
             <Check size={20} />
-            <span>Save Feeding</span>
+            <span>{loading ? 'Saving...' : 'Save Feeding'}</span>
           </button>
           
           <button
@@ -588,9 +625,40 @@ const FeedMeApp = () => {
         </button>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          margin: '1rem',
+          padding: '1rem',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '0.5rem',
+          color: '#dc2626'
+        }}>
+          {error}
+          <button 
+            onClick={loadFeedings}
+            style={{
+              marginLeft: '0.5rem',
+              color: '#dc2626',
+              textDecoration: 'underline',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Feeding List */}
       <div style={{padding: '0 1rem 1rem 1rem'}}>
-        {dates.length === 0 ? (
+        {loading ? (
+          <div style={{textAlign: 'center', padding: '2rem 0'}}>
+            <p style={{color: '#6b7280'}}>Loading feedings...</p>
+          </div>
+        ) : dates.length === 0 ? (
           <div style={{textAlign: 'center', padding: '2rem 0'}}>
             <Baby size={48} style={{margin: '0 auto 1rem auto', color: '#d1d5db'}} />
             <p style={{color: '#6b7280', marginBottom: '0.5rem'}}>No feedings yet</p>
