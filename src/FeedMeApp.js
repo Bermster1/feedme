@@ -26,7 +26,8 @@ const FeedMeApp = () => {
   const [showSettings, setShowSettings] = useState(false);
   
   // Calculate baby's age in weeks from birth date
-  const babyAgeWeeks = babyBirthDate ? Math.floor((Date.now() - new Date(babyBirthDate).getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
+  const babyAgeWeeks = babyBirthDate ? 
+    Math.floor((Date.now() - new Date(babyBirthDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
 
   // Load feedings from Supabase on component mount
   useEffect(() => {
@@ -76,25 +77,30 @@ const FeedMeApp = () => {
 
   // Calculate time since last feeding
   const getTimeSinceLastFeeding = () => {
-    if (todaysFeedings.length === 0) return "No feedings yet";
-    
-    const lastFeeding = todaysFeedings[0]; // Already sorted by most recent
-    const lastFeedingTime = new Date(`${lastFeeding.date} ${lastFeeding.time}`);
-    const now = new Date();
-    const diffMs = now - lastFeedingTime;
-    
-    if (diffMs < 0) return "Just added";
-    
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(diffMinutes / 60);
-    const minutes = diffMinutes % 60;
-    
-    if (hours === 0) {
-      return `${minutes}m ago`;
-    } else if (minutes === 0) {
-      return `${hours}h ago`;
-    } else {
-      return `${hours}h ${minutes}m ago`;
+    try {
+      if (todaysFeedings.length === 0) return "No feedings yet";
+      
+      const lastFeeding = todaysFeedings[0]; // Already sorted by most recent
+      const lastFeedingTime = new Date(`${lastFeeding.date}T${lastFeeding.time}`);
+      const now = new Date();
+      const diffMs = now - lastFeedingTime;
+      
+      if (diffMs < 0) return "Just added";
+      
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      
+      if (hours === 0) {
+        return `${minutes}m ago`;
+      } else if (minutes === 0) {
+        return `${hours}h ago`;
+      } else {
+        return `${hours}h ${minutes}m ago`;
+      }
+    } catch (error) {
+      console.error('Error calculating time since last feeding:', error);
+      return "Recently";
     }
   };
   
@@ -159,110 +165,132 @@ const FeedMeApp = () => {
 
   // Calculate statistics for totals screen
   const calculateStats = () => {
-    if (allFeedings.length === 0) return null;
+    try {
+      if (allFeedings.length === 0) return null;
 
-    const sortedFeedings = [...allFeedings].sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.time}`);
-      const dateB = new Date(`${b.date} ${b.time}`);
-      return dateA - dateB; // Oldest first
-    });
+      const sortedFeedings = [...allFeedings].sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time}`);
+        const dateB = new Date(`${b.date}T${b.time}`);
+        return dateA - dateB; // Oldest first
+      });
 
-    // Calculate average longest overnight stretch by analyzing each night individually
-    const nightlyLongestStretches = calculateNightlyLongestStretches(sortedFeedings);
-    const longestOvernightMinutes = nightlyLongestStretches.length > 0 
-      ? Math.round(nightlyLongestStretches.reduce((sum, stretch) => sum + stretch, 0) / nightlyLongestStretches.length)
-      : 0;
+      // Calculate average longest overnight stretch by analyzing each night individually
+      const nightlyLongestStretches = calculateNightlyLongestStretches(sortedFeedings);
+      const longestOvernightMinutes = nightlyLongestStretches.length > 0 
+        ? Math.round(nightlyLongestStretches.reduce((sum, stretch) => sum + stretch, 0) / nightlyLongestStretches.length)
+        : 0;
 
-    // Calculate weekly overview data
-    const weeklyOverview = calculateWeeklyOverview(sortedFeedings);
-    
-    // Calculate last week daily breakdown
-    const lastWeekDaily = calculateLastWeekDaily(sortedFeedings);
+      // Calculate weekly overview data
+      const weeklyOverview = calculateWeeklyOverview(sortedFeedings);
+      
+      // Calculate last week daily breakdown
+      const lastWeekDaily = calculateLastWeekDaily(sortedFeedings);
 
-    return {
-      longestOvernight: formatDuration(longestOvernightMinutes),
-      weeklyOverview,
-      lastWeekDaily
-    };
+      return {
+        longestOvernight: formatDuration(longestOvernightMinutes),
+        weeklyOverview,
+        lastWeekDaily
+      };
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+      return null;
+    }
   };
 
   // Calculate longest stretch for each individual night (7pm to 7am)
   const calculateNightlyLongestStretches = (sortedFeedings) => {
-    const nightlyStretches = [];
-    
-    // Group feedings by night cycle (7pm to 7am next day)
-    const nights = {};
-    
-    sortedFeedings.forEach(feeding => {
-      const feedingTime = new Date(`${feeding.date} ${feeding.time}`);
-      const hour = feedingTime.getHours();
+    try {
+      const nightlyStretches = [];
       
-      // Determine which night this feeding belongs to
-      let nightDate;
-      if (hour >= 19) {
-        // After 7pm - part of this night
-        nightDate = feeding.date;
-      } else if (hour <= 7) {
-        // Before 7am - part of previous night
-        const prevDay = new Date(feeding.date);
-        prevDay.setDate(prevDay.getDate() - 1);
-        nightDate = prevDay.toISOString().split('T')[0];
-      } else {
-        // Daytime feeding - skip for nighttime calculation
-        return;
-      }
+      // Group feedings by night cycle (7pm to 7am next day)
+      const nights = {};
       
-      if (!nights[nightDate]) {
-        nights[nightDate] = [];
-      }
-      nights[nightDate].push(feeding);
-    });
-    
-    // For each night, calculate the longest gap
-    Object.values(nights).forEach(nightFeedings => {
-      if (nightFeedings.length < 2) return;
-      
-      // Sort by time within this night
-      const sortedNightFeedings = nightFeedings.sort((a, b) => {
-        const timeA = new Date(`${a.date} ${a.time}`);
-        const timeB = new Date(`${b.date} ${b.time}`);
-        return timeA - timeB;
+      sortedFeedings.forEach(feeding => {
+        try {
+          const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+          const hour = feedingTime.getHours();
+          
+          // Determine which night this feeding belongs to
+          let nightDate;
+          if (hour >= 19) {
+            // After 7pm - part of this night
+            nightDate = feeding.date;
+          } else if (hour <= 7) {
+            // Before 7am - part of previous night
+            const prevDay = new Date(feeding.date + 'T00:00:00');
+            prevDay.setDate(prevDay.getDate() - 1);
+            nightDate = prevDay.toISOString().split('T')[0];
+          } else {
+            // Daytime feeding - skip for nighttime calculation
+            return;
+          }
+          
+          if (!nights[nightDate]) {
+            nights[nightDate] = [];
+          }
+          nights[nightDate].push(feeding);
+        } catch (err) {
+          console.error('Error processing feeding time:', err);
+        }
       });
       
-      let longestGapMinutes = 0;
-      
-      for (let i = 1; i < sortedNightFeedings.length; i++) {
-        const current = sortedNightFeedings[i];
-        const previous = sortedNightFeedings[i - 1];
-        
-        const currentTime = new Date(`${current.date} ${current.time}`);
-        const previousTime = new Date(`${previous.date} ${previous.time}`);
-        
-        // Handle overnight gaps (previous feeding was yesterday, current is today)
-        let diffMs;
-        if (currentTime < previousTime) {
-          // Gap crosses midnight
-          const nextDay = new Date(currentTime);
-          nextDay.setDate(nextDay.getDate() + 1);
-          diffMs = nextDay - previousTime;
-        } else {
-          diffMs = currentTime - previousTime;
+      // For each night, calculate the longest gap
+      Object.values(nights).forEach(nightFeedings => {
+        try {
+          if (nightFeedings.length < 2) return;
+          
+          // Sort by time within this night
+          const sortedNightFeedings = nightFeedings.sort((a, b) => {
+            const timeA = new Date(`${a.date}T${a.time}`);
+            const timeB = new Date(`${b.date}T${b.time}`);
+            return timeA - timeB;
+          });
+          
+          let longestGapMinutes = 0;
+          
+          for (let i = 1; i < sortedNightFeedings.length; i++) {
+            try {
+              const current = sortedNightFeedings[i];
+              const previous = sortedNightFeedings[i - 1];
+              
+              const currentTime = new Date(`${current.date}T${current.time}`);
+              const previousTime = new Date(`${previous.date}T${previous.time}`);
+              
+              // Handle overnight gaps (previous feeding was yesterday, current is today)
+              let diffMs;
+              if (currentTime < previousTime) {
+                // Gap crosses midnight
+                const nextDay = new Date(currentTime);
+                nextDay.setDate(nextDay.getDate() + 1);
+                diffMs = nextDay - previousTime;
+              } else {
+                diffMs = currentTime - previousTime;
+              }
+              
+              const gapMinutes = Math.floor(diffMs / (1000 * 60));
+              
+              // Cap at 12 hours to be realistic
+              if (gapMinutes <= 720 && gapMinutes > longestGapMinutes) {
+                longestGapMinutes = gapMinutes;
+              }
+            } catch (err) {
+              console.error('Error calculating gap:', err);
+            }
+          }
+          
+          if (longestGapMinutes > 0) {
+            nightlyStretches.push(longestGapMinutes);
+          }
+        } catch (err) {
+          console.error('Error processing night feedings:', err);
         }
-        
-        const gapMinutes = Math.floor(diffMs / (1000 * 60));
-        
-        // Cap at 12 hours to be realistic
-        if (gapMinutes <= 720 && gapMinutes > longestGapMinutes) {
-          longestGapMinutes = gapMinutes;
-        }
-      }
+      });
       
-      if (longestGapMinutes > 0) {
-        nightlyStretches.push(longestGapMinutes);
-      }
-    });
-    
-    return nightlyStretches;
+      return nightlyStretches;
+    } catch (error) {
+      console.error('Error calculating nightly stretches:', error);
+      return [];
+    }
   };
 
 
@@ -522,7 +550,9 @@ const FeedMeApp = () => {
       maxWidth: '28rem',
       margin: '0 auto',
       backgroundColor: '#f7f7f7',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      width: '100%',
+      overflow: 'hidden'
     },
     header: {
       backgroundColor: 'white',
