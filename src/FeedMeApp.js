@@ -71,8 +71,13 @@ const FeedMeApp = () => {
 
   // Get today's feedings (7am to 7am cycle)
   const todaysFeedings = allFeedings.filter(f => {
-    const feedingDateTime = new Date(`${f.date} ${f.time}`);
-    return getFeedingDay(feedingDateTime) === getFeedingDay(new Date());
+    try {
+      const feedingDateTime = new Date(`${f.date}T${f.time}`);
+      return getFeedingDay(feedingDateTime) === getFeedingDay(new Date());
+    } catch (error) {
+      console.error('Error filtering today\'s feedings:', error);
+      return false;
+    }
   });
 
   // Calculate time since last feeding
@@ -142,24 +147,29 @@ const FeedMeApp = () => {
   };
 
   const calculateGapBetweenFeedings = (currentFeeding, previousFeeding) => {
-    if (!previousFeeding) return null;
-    
-    const currentTime = new Date(`${currentFeeding.date} ${currentFeeding.time}`);
-    const previousTime = new Date(`${previousFeeding.date} ${previousFeeding.time}`);
-    
-    const diffMs = currentTime - previousTime;
-    if (diffMs <= 0) return null;
-    
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(diffMinutes / 60);
-    const minutes = diffMinutes % 60;
-    
-    if (hours === 0) {
-      return `${minutes}m`;
-    } else if (minutes === 0) {
-      return `${hours}h`;
-    } else {
-      return `${hours}h ${minutes}m`;
+    try {
+      if (!previousFeeding) return null;
+      
+      const currentTime = new Date(`${currentFeeding.date}T${currentFeeding.time}`);
+      const previousTime = new Date(`${previousFeeding.date}T${previousFeeding.time}`);
+      
+      const diffMs = currentTime - previousTime;
+      if (diffMs <= 0) return null;
+      
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      
+      if (hours === 0) {
+        return `${minutes}m`;
+      } else if (minutes === 0) {
+        return `${hours}h`;
+      } else {
+        return `${hours}h ${minutes}m`;
+      }
+    } catch (error) {
+      console.error('Error calculating gap between feedings:', error);
+      return null;
     }
   };
 
@@ -325,31 +335,45 @@ const FeedMeApp = () => {
       weekEnd.setHours(23, 59, 59, 999);
 
       const weekFeedings = sortedFeedings.filter(feeding => {
-        const feedingDate = new Date(`${feeding.date} ${feeding.time}`);
-        return feedingDate >= weekStart && feedingDate <= weekEnd;
+        try {
+          const feedingDate = new Date(`${feeding.date}T${feeding.time}`);
+          return feedingDate >= weekStart && feedingDate <= weekEnd;
+        } catch (error) {
+          console.error('Error filtering week feedings:', error);
+          return false;
+        }
       });
 
       if (weekFeedings.length > 0) {
         // Calculate average time between daytime feedings for this week
         const daytimeFeedings = weekFeedings.filter(feeding => {
-          const feedingTime = new Date(`${feeding.date} ${feeding.time}`);
-          const hour = feedingTime.getHours();
-          return hour >= 7 && hour < 19; // 7am to 7pm
+          try {
+            const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+            const hour = feedingTime.getHours();
+            return hour >= 7 && hour < 19; // 7am to 7pm
+          } catch (error) {
+            console.error('Error filtering daytime feedings:', error);
+            return false;
+          }
         });
 
         const daytimeGaps = [];
         for (let i = 1; i < daytimeFeedings.length; i++) {
-          const current = daytimeFeedings[i];
-          const previous = daytimeFeedings[i - 1];
-          
-          const currentTime = new Date(`${current.date} ${current.time}`);
-          const previousTime = new Date(`${previous.date} ${previous.time}`);
-          
-          const timeDiff = currentTime - previousTime;
-          const hoursDiff = timeDiff / (1000 * 60 * 60);
-          
-          if (hoursDiff > 0 && hoursDiff <= 4) { // Max 4 hours for average
-            daytimeGaps.push(Math.floor(timeDiff / (1000 * 60)));
+          try {
+            const current = daytimeFeedings[i];
+            const previous = daytimeFeedings[i - 1];
+            
+            const currentTime = new Date(`${current.date}T${current.time}`);
+            const previousTime = new Date(`${previous.date}T${previous.time}`);
+            
+            const timeDiff = currentTime - previousTime;
+            const hoursDiff = timeDiff / (1000 * 60 * 60);
+            
+            if (hoursDiff > 0 && hoursDiff <= 4) { // Max 4 hours for average
+              daytimeGaps.push(Math.floor(timeDiff / (1000 * 60)));
+            }
+          } catch (error) {
+            console.error('Error calculating daytime gaps:', error);
           }
         }
 
@@ -390,31 +414,45 @@ const FeedMeApp = () => {
       nextDay.setHours(0, 0, 0, 0);
 
       const dayFeedings = sortedFeedings.filter(feeding => {
-        const feedingDate = new Date(`${feeding.date} ${feeding.time}`);
-        return feedingDate >= date && feedingDate < nextDay;
+        try {
+          const feedingDate = new Date(`${feeding.date}T${feeding.time}`);
+          return feedingDate >= date && feedingDate < nextDay;
+        } catch (error) {
+          console.error('Error filtering day feedings:', error);
+          return false;
+        }
       });
 
       if (dayFeedings.length > 0) {
         // Calculate average time between daytime feedings for this day
         const daytimeFeedings = dayFeedings.filter(feeding => {
-          const feedingTime = new Date(`${feeding.date} ${feeding.time}`);
-          const hour = feedingTime.getHours();
-          return hour >= 7 && hour < 19; // 7am to 7pm
+          try {
+            const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+            const hour = feedingTime.getHours();
+            return hour >= 7 && hour < 19; // 7am to 7pm
+          } catch (error) {
+            console.error('Error filtering daily daytime feedings:', error);
+            return false;
+          }
         });
 
         const daytimeGaps = [];
         for (let j = 1; j < daytimeFeedings.length; j++) {
-          const current = daytimeFeedings[j];
-          const previous = daytimeFeedings[j - 1];
-          
-          const currentTime = new Date(`${current.date} ${current.time}`);
-          const previousTime = new Date(`${previous.date} ${previous.time}`);
-          
-          const timeDiff = currentTime - previousTime;
-          const hoursDiff = timeDiff / (1000 * 60 * 60);
-          
-          if (hoursDiff > 0 && hoursDiff <= 4) { // Max 4 hours for average
-            daytimeGaps.push(Math.floor(timeDiff / (1000 * 60)));
+          try {
+            const current = daytimeFeedings[j];
+            const previous = daytimeFeedings[j - 1];
+            
+            const currentTime = new Date(`${current.date}T${current.time}`);
+            const previousTime = new Date(`${previous.date}T${previous.time}`);
+            
+            const timeDiff = currentTime - previousTime;
+            const hoursDiff = timeDiff / (1000 * 60 * 60);
+            
+            if (hoursDiff > 0 && hoursDiff <= 4) { // Max 4 hours for average
+              daytimeGaps.push(Math.floor(timeDiff / (1000 * 60)));
+            }
+          } catch (error) {
+            console.error('Error calculating daily daytime gaps:', error);
           }
         }
 
