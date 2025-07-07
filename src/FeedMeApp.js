@@ -76,6 +76,36 @@ const FeedMeApp = () => {
     return new Date().toISOString().split('T')[0];
   };
 
+  // Helper function to parse feeding date/time without timezone issues
+  const parseFeedingDateTime = (feeding) => {
+    try {
+      // Parse date components manually to avoid timezone issues
+      const [year, month, day] = feeding.date.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      
+      // Handle time formatting
+      let timeStr = feeding.time;
+      if (timeStr.includes(' ')) {
+        // Convert "5:10 PM" format to 24-hour
+        const [time, period] = timeStr.split(' ');
+        const [hour, minute] = time.split(':');
+        let hour24 = parseInt(hour);
+        if (period === 'PM' && hour24 !== 12) hour24 += 12;
+        if (period === 'AM' && hour24 === 12) hour24 = 0;
+        date.setHours(hour24, parseInt(minute), 0, 0);
+      } else {
+        // Already in 24-hour format
+        const [hour, minute] = timeStr.split(':');
+        date.setHours(parseInt(hour), parseInt(minute), 0, 0);
+      }
+      
+      return date;
+    } catch (e) {
+      console.error('Error parsing feeding datetime:', e);
+      return null;
+    }
+  };
+
   // Get today's feedings - simple date string comparison
   const getTodayString = () => {
     const today = new Date();
@@ -90,7 +120,6 @@ const FeedMeApp = () => {
       const todayString = getTodayString();
       const isToday = f.date === todayString;
       
-      console.log('Checking feeding:', f.date, f.time, 'isToday:', isToday, 'todayString:', todayString);
       return isToday;
     } catch (error) {
       console.error('Error filtering today\'s feedings:', error);
@@ -118,76 +147,44 @@ const FeedMeApp = () => {
     }
   });
 
-  // Calculate time since the most recent feeding across all dates
+  // Calculate time since last feeding - prioritize today's feedings
   const getTimeSinceLastFeeding = () => {
     try {
+      // First check if there are any feedings today
+      if (todaysFeedings.length > 0) {
+        const lastTodayFeeding = todaysFeedings[0]; // Already sorted most recent first
+        
+        // Calculate time since today's most recent feeding
+        const [time, period] = lastTodayFeeding.time.split(' ');
+        const [hour, minute] = time.split(':');
+        let hour24 = parseInt(hour);
+        if (period === 'PM' && hour24 !== 12) hour24 += 12;
+        if (period === 'AM' && hour24 === 12) hour24 = 0;
+        
+        const now = new Date();
+        const lastFeedingTime = new Date();
+        lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
+        
+        const diffMs = now - lastFeedingTime;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+        
+        if (hours === 0) {
+          return `${minutes}m`;
+        } else if (minutes === 0) {
+          return `${hours}h`;
+        } else {
+          return `${hours}h ${minutes}m`;
+        }
+      }
+      
+      // If no feedings today, find most recent from any day
       if (allFeedings.length === 0) return "No feedings yet";
       
-      console.log('All feedings for last feeding calc:', allFeedings);
+      // Simple fallback for yesterday/older feedings
+      return "Over 24h ago";
       
-      // Find the most recent feeding across all dates
-      const allFeedingsSorted = [...allFeedings].sort((a, b) => {
-        try {
-          // Convert times to comparable values
-          const getDateTime = (feeding) => {
-            const [time, period] = feeding.time.split(' ');
-            const [hour, minute] = time.split(':');
-            let hour24 = parseInt(hour);
-            if (period === 'PM' && hour24 !== 12) hour24 += 12;
-            if (period === 'AM' && hour24 === 12) hour24 = 0;
-            
-            const date = new Date(feeding.date);
-            date.setHours(hour24, parseInt(minute), 0, 0);
-            console.log(`Feeding ${feeding.date} ${feeding.time} -> DateTime:`, date);
-            return date;
-          };
-          
-          const dateA = getDateTime(a);
-          const dateB = getDateTime(b);
-          return dateB - dateA; // Most recent first
-        } catch (error) {
-          console.error('Error sorting feedings:', error);
-          return 0;
-        }
-      });
-      
-      console.log('Sorted feedings (most recent first):', allFeedingsSorted);
-      
-      const lastFeeding = allFeedingsSorted[0];
-      console.log('Most recent feeding selected:', lastFeeding);
-      
-      // Calculate time since this feeding
-      const [time, period] = lastFeeding.time.split(' ');
-      const [hour, minute] = time.split(':');
-      let hour24 = parseInt(hour);
-      if (period === 'PM' && hour24 !== 12) hour24 += 12;
-      if (period === 'AM' && hour24 === 12) hour24 = 0;
-      
-      const lastFeedingTime = new Date(lastFeeding.date);
-      lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
-      
-      const now = new Date();
-      console.log('Last feeding time:', lastFeedingTime);
-      console.log('Current time:', now);
-      
-      const diffMs = now - lastFeedingTime;
-      console.log('Difference in ms:', diffMs);
-      
-      if (diffMs < 0) return "Just added";
-      
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      
-      console.log('Time since last feeding calculation:', {diffMs, diffMinutes, hours, minutes});
-      
-      if (hours === 0) {
-        return `${minutes}m`;
-      } else if (minutes === 0) {
-        return `${hours}h`;
-      } else {
-        return `${hours}h ${minutes}m`;
-      }
     } catch (error) {
       console.error('Error calculating time since last feeding:', error);
       return "Recently";
@@ -207,17 +204,18 @@ const FeedMeApp = () => {
   const dates = Object.keys(feedingsByDate).sort().reverse();
 
   const totalOunces = todaysFeedings.reduce((sum, feeding) => {
-    console.log('Adding ounces:', feeding.ounces, 'current sum:', sum);
     return sum + feeding.ounces;
   }, 0);
-  console.log('Final totalOunces:', totalOunces);
   const timeSinceLastFeeding = getTimeSinceLastFeeding();
 
   const presetOunces = [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7];
 
   // Helper function to format date
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Fix timezone issue by parsing date components manually
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -240,28 +238,8 @@ const FeedMeApp = () => {
       if (!previousFeeding || !currentFeeding) return null;
       
       // More robust time parsing
-      const parseDateTime = (feeding) => {
-        try {
-          // Handle different time formats
-          let timeStr = feeding.time;
-          if (timeStr.includes(' ')) {
-            // Convert "5:10 PM" format to 24-hour
-            const [time, period] = timeStr.split(' ');
-            const [hour, minute] = time.split(':');
-            let hour24 = parseInt(hour);
-            if (period === 'PM' && hour24 !== 12) hour24 += 12;
-            if (period === 'AM' && hour24 === 12) hour24 = 0;
-            timeStr = `${hour24.toString().padStart(2, '0')}:${minute}:00`;
-          }
-          return new Date(`${feeding.date}T${timeStr}`);
-        } catch (e) {
-          console.error('Error parsing datetime:', e);
-          return null;
-        }
-      };
-      
-      const currentTime = parseDateTime(currentFeeding);
-      const previousTime = parseDateTime(previousFeeding);
+      const currentTime = parseFeedingDateTime(currentFeeding);
+      const previousTime = parseFeedingDateTime(previousFeeding);
       
       if (!currentTime || !previousTime || isNaN(currentTime) || isNaN(previousTime)) {
         return null;
@@ -295,8 +273,8 @@ const FeedMeApp = () => {
       if (allFeedings.length === 0) return null;
 
       const sortedFeedings = [...allFeedings].sort((a, b) => {
-        const dateA = new Date(`${a.date}T${a.time}`);
-        const dateB = new Date(`${b.date}T${b.time}`);
+        const dateA = parseFeedingDateTime(a);
+        const dateB = parseFeedingDateTime(b);
         return dateA - dateB; // Oldest first
       });
 
@@ -333,7 +311,7 @@ const FeedMeApp = () => {
       
       sortedFeedings.forEach(feeding => {
         try {
-          const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+          const feedingTime = parseFeedingDateTime(feeding);
           const hour = feedingTime.getHours();
           
           // Determine which night this feeding belongs to
@@ -343,7 +321,8 @@ const FeedMeApp = () => {
             nightDate = feeding.date;
           } else if (hour <= 7) {
             // Before 7am - part of previous night
-            const prevDay = new Date(feeding.date + 'T00:00:00');
+            const [year, month, day] = feeding.date.split('-');
+            const prevDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             prevDay.setDate(prevDay.getDate() - 1);
             nightDate = prevDay.toISOString().split('T')[0];
           } else {
@@ -367,8 +346,8 @@ const FeedMeApp = () => {
           
           // Sort by time within this night
           const sortedNightFeedings = nightFeedings.sort((a, b) => {
-            const timeA = new Date(`${a.date}T${a.time}`);
-            const timeB = new Date(`${b.date}T${b.time}`);
+            const timeA = parseFeedingDateTime(a);
+            const timeB = parseFeedingDateTime(b);
             return timeA - timeB;
           });
           
@@ -379,8 +358,8 @@ const FeedMeApp = () => {
               const current = sortedNightFeedings[i];
               const previous = sortedNightFeedings[i - 1];
               
-              const currentTime = new Date(`${current.date}T${current.time}`);
-              const previousTime = new Date(`${previous.date}T${previous.time}`);
+              const currentTime = parseFeedingDateTime(current);
+              const previousTime = parseFeedingDateTime(previous);
               
               // Handle overnight gaps (previous feeding was yesterday, current is today)
               let diffMs;
@@ -452,7 +431,7 @@ const FeedMeApp = () => {
 
       const weekFeedings = sortedFeedings.filter(feeding => {
         try {
-          const feedingDate = new Date(`${feeding.date}T${feeding.time}`);
+          const feedingDate = parseFeedingDateTime(feeding);
           return feedingDate >= weekStart && feedingDate <= weekEnd;
         } catch (error) {
           console.error('Error filtering week feedings:', error);
@@ -464,7 +443,7 @@ const FeedMeApp = () => {
         // Calculate average time between daytime feedings for this week
         const daytimeFeedings = weekFeedings.filter(feeding => {
           try {
-            const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+            const feedingTime = parseFeedingDateTime(feeding);
             const hour = feedingTime.getHours();
             return hour >= 7 && hour < 19; // 7am to 7pm
           } catch (error) {
@@ -479,8 +458,8 @@ const FeedMeApp = () => {
             const current = daytimeFeedings[i];
             const previous = daytimeFeedings[i - 1];
             
-            const currentTime = new Date(`${current.date}T${current.time}`);
-            const previousTime = new Date(`${previous.date}T${previous.time}`);
+            const currentTime = parseFeedingDateTime(current);
+            const previousTime = parseFeedingDateTime(previous);
             
             const timeDiff = currentTime - previousTime;
             const hoursDiff = timeDiff / (1000 * 60 * 60);
@@ -531,7 +510,7 @@ const FeedMeApp = () => {
 
       const dayFeedings = sortedFeedings.filter(feeding => {
         try {
-          const feedingDate = new Date(`${feeding.date}T${feeding.time}`);
+          const feedingDate = parseFeedingDateTime(feeding);
           return feedingDate >= date && feedingDate < nextDay;
         } catch (error) {
           console.error('Error filtering day feedings:', error);
@@ -543,7 +522,7 @@ const FeedMeApp = () => {
         // Calculate average time between daytime feedings for this day
         const daytimeFeedings = dayFeedings.filter(feeding => {
           try {
-            const feedingTime = new Date(`${feeding.date}T${feeding.time}`);
+            const feedingTime = parseFeedingDateTime(feeding);
             const hour = feedingTime.getHours();
             return hour >= 7 && hour < 19; // 7am to 7pm
           } catch (error) {
@@ -558,8 +537,8 @@ const FeedMeApp = () => {
             const current = daytimeFeedings[j];
             const previous = daytimeFeedings[j - 1];
             
-            const currentTime = new Date(`${current.date}T${current.time}`);
-            const previousTime = new Date(`${previous.date}T${previous.time}`);
+            const currentTime = parseFeedingDateTime(current);
+            const previousTime = parseFeedingDateTime(previous);
             
             const timeDiff = currentTime - previousTime;
             const hoursDiff = timeDiff / (1000 * 60 * 60);
@@ -1412,20 +1391,8 @@ const FeedMeApp = () => {
                     // Get all feedings sorted chronologically (oldest first)
                     const allFeedingsSorted = [...allFeedings].sort((a, b) => {
                       try {
-                        const getDateTime = (f) => {
-                          const [time, period] = f.time.split(' ');
-                          const [hour, minute] = time.split(':');
-                          let hour24 = parseInt(hour);
-                          if (period === 'PM' && hour24 !== 12) hour24 += 12;
-                          if (period === 'AM' && hour24 === 12) hour24 = 0;
-                          
-                          const date = new Date(f.date);
-                          date.setHours(hour24, parseInt(minute), 0, 0);
-                          return date;
-                        };
-                        
-                        const dateA = getDateTime(a);
-                        const dateB = getDateTime(b);
+                        const dateA = parseFeedingDateTime(a);
+                        const dateB = parseFeedingDateTime(b);
                         return dateA - dateB; // Oldest first
                       } catch (error) {
                         return 0;
@@ -1440,7 +1407,6 @@ const FeedMeApp = () => {
                       gap = calculateGapBetweenFeedings(feeding, previousFeeding);
                     }
                     
-                    console.log(`Feeding ${feeding.time}: gap = ${gap}`);
                     
                     return (
                       <div key={feeding.id} style={styles.feedingCard}>
