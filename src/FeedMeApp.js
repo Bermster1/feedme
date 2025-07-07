@@ -13,7 +13,7 @@ const FeedMeApp = () => {
     return { hour, minute, period };
   });
   const [selectedDate, setSelectedDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]; // Default to today's calendar date
+    return new Date().toISOString().split('T')[0]; // Always default to current calendar date
   });
   const [selectedOunces, setSelectedOunces] = useState(null);
   const [customOunces, setCustomOunces] = useState('');
@@ -712,13 +712,16 @@ const FeedMeApp = () => {
         
         setAllFeedings(newFeedingsList);
         
-        // Reset time to current time for next feeding
+        // Reset time and date to current values for next feeding
         const now = new Date();
         let currentHour = now.getHours();
         const currentMinute = now.getMinutes();
         const period = currentHour >= 12 ? 'PM' : 'AM';
         currentHour = currentHour % 12 || 12;
         setSelectedTime({ hour: currentHour, minute: currentMinute, period });
+        
+        // Reset date to current calendar date
+        setSelectedDate(now.toISOString().split('T')[0]);
         
         setSelectedOunces(null);
         setCustomOunces('');
@@ -1254,9 +1257,20 @@ const FeedMeApp = () => {
             <label>Date & Time</label>
           </div>
           
-          <div style={{display: 'flex', gap: '0.75rem'}}>
-            {/* Date Selection (Left Side) */}
-            <div style={{flex: 1, position: 'relative'}}>
+          {/* Date Selection */}
+          <div style={{marginBottom: '1rem'}}>
+            <div style={{
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#6b7280',
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              📅 <span>Date</span>
+            </div>
+            <div style={{position: 'relative'}}>
               <input
                 type="date"
                 value={selectedDate}
@@ -1274,20 +1288,20 @@ const FeedMeApp = () => {
               <div
                 style={{
                   width: '100%',
-                  padding: '1rem',
+                  padding: '0.875rem',
                   backgroundColor: 'white',
                   border: '1px solid #d1d5db',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  fontSize: '0.9rem',
+                  fontSize: '1rem',
                   pointerEvents: 'none',
-                  minHeight: '50px'
+                  minHeight: '48px'
                 }}
               >
-                <span style={{color: '#007AFF', fontSize: '0.95rem'}}>
+                <span style={{color: '#007AFF', fontSize: '1rem', lineHeight: '1.2'}}>
                   {(() => {
                     const date = new Date(selectedDate + 'T00:00:00');
                     const today = new Date();
@@ -1302,22 +1316,35 @@ const FeedMeApp = () => {
                     const tomorrowStr = tomorrow.toISOString().split('T')[0];
                     
                     if (dateStr === todayStr) {
-                      return `Today\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                      return `Today, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
                     } else if (dateStr === yesterdayStr) {
-                      return `Yesterday\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                      return `Yesterday, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
                     } else if (dateStr === tomorrowStr) {
-                      return `Tomorrow\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                      return `Tomorrow, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
                     } else {
                       return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                     }
                   })()}
                 </span>
-                <span style={{color: '#007AFF', fontSize: '1rem'}}>📅</span>
+                <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
               </div>
             </div>
+          </div>
 
-            {/* Time Selection (Right Side) */}
-            <div style={{flex: 1, position: 'relative'}}>
+          {/* Time Selection */}
+          <div>
+            <div style={{
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              color: '#6b7280',
+              marginBottom: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              🕐 <span>Time</span>
+            </div>
+            <div style={{position: 'relative'}}>
               <input
                 type="time"
                 value={(() => {
@@ -1360,23 +1387,23 @@ const FeedMeApp = () => {
               <div
                 style={{
                   width: '100%',
-                  padding: '1rem',
+                  padding: '0.875rem',
                   backgroundColor: 'white',
                   border: '1px solid #d1d5db',
-                  borderRadius: '12px',
+                  borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
                   fontSize: '1rem',
                   pointerEvents: 'none',
-                  minHeight: '50px'
+                  minHeight: '48px'
                 }}
               >
                 <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
                   {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
                 </span>
-                <span style={{color: '#007AFF', fontSize: '1rem'}}>🕐</span>
+                <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
               </div>
             </div>
           </div>
