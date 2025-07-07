@@ -147,43 +147,39 @@ const FeedMeApp = () => {
     }
   });
 
-  // Calculate time since last feeding - prioritize today's feedings
+  // Calculate time since last feeding - find most recent feed from any day
   const getTimeSinceLastFeeding = () => {
     try {
-      // First check if there are any feedings today
-      if (todaysFeedings.length > 0) {
-        const lastTodayFeeding = todaysFeedings[0]; // Already sorted most recent first
-        
-        // Calculate time since today's most recent feeding
-        const [time, period] = lastTodayFeeding.time.split(' ');
-        const [hour, minute] = time.split(':');
-        let hour24 = parseInt(hour);
-        if (period === 'PM' && hour24 !== 12) hour24 += 12;
-        if (period === 'AM' && hour24 === 12) hour24 = 0;
-        
-        const now = new Date();
-        const lastFeedingTime = new Date();
-        lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
-        
-        const diffMs = now - lastFeedingTime;
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        const hours = Math.floor(diffMinutes / 60);
-        const minutes = diffMinutes % 60;
-        
-        if (hours === 0) {
-          return `${minutes}m`;
-        } else if (minutes === 0) {
-          return `${hours}h`;
-        } else {
-          return `${hours}h ${minutes}m`;
-        }
-      }
-      
-      // If no feedings today, find most recent from any day
       if (allFeedings.length === 0) return "No feedings yet";
       
-      // Simple fallback for yesterday/older feedings
-      return "Over 24h ago";
+      // Get the most recent feeding from all feedings (sorted by date desc, then time desc)
+      const mostRecentFeeding = allFeedings[0];
+      
+      // Parse the most recent feeding's date and time
+      const feedingDateTime = parseFeedingDateTime(mostRecentFeeding);
+      
+      if (!feedingDateTime) {
+        return "Recently";
+      }
+      
+      const now = new Date();
+      const diffMs = now - feedingDateTime;
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      
+      if (diffMinutes < 0) {
+        return "Recently"; // Future time, shouldn't happen but handle gracefully
+      }
+      
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      
+      if (hours === 0) {
+        return `${minutes}m`;
+      } else if (minutes === 0) {
+        return `${hours}h`;
+      } else {
+        return `${hours}h ${minutes}m`;
+      }
       
     } catch (error) {
       console.error('Error calculating time since last feeding:', error);
