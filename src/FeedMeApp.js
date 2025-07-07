@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings } from 'lucide-react';
 import { feedingService } from './feedingService';
 
