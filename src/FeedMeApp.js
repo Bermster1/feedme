@@ -115,37 +115,52 @@ const FeedMeApp = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const todaysFeedings = allFeedings.filter(f => {
+  // Get current feeding day's feedings (7am to 7am cycle)
+  const getCurrentFeedingDayFeedings = () => {
     try {
-      const todayString = getTodayString();
-      const isToday = f.date === todayString;
+      const now = new Date();
+      const currentHour = now.getHours();
       
-      return isToday;
-    } catch (error) {
-      console.error('Error filtering today\'s feedings:', error);
-      return false;
-    }
-  }).sort((a, b) => {
-    // Sort by time descending (most recent first)
-    try {
-      // Simple time comparison - convert to minutes since midnight
-      const getMinutesSinceMidnight = (timeStr) => {
-        const [time, period] = timeStr.split(' ');
-        const [hour, minute] = time.split(':');
-        let hour24 = parseInt(hour);
-        if (period === 'PM' && hour24 !== 12) hour24 += 12;
-        if (period === 'AM' && hour24 === 12) hour24 = 0;
-        return hour24 * 60 + parseInt(minute);
-      };
+      // Determine the start of the current feeding day (7am)
+      const feedingDayStart = new Date(now);
+      if (currentHour < 7) {
+        // Before 7am - feeding day started yesterday at 7am
+        feedingDayStart.setDate(now.getDate() - 1);
+      }
+      feedingDayStart.setHours(7, 0, 0, 0);
       
-      const timeA = getMinutesSinceMidnight(a.time);
-      const timeB = getMinutesSinceMidnight(b.time);
-      return timeB - timeA; // Most recent first
+      // End of feeding day is 7am next day
+      const feedingDayEnd = new Date(feedingDayStart);
+      feedingDayEnd.setDate(feedingDayStart.getDate() + 1);
+      
+      return allFeedings.filter(f => {
+        try {
+          const feedingDateTime = parseFeedingDateTime(f);
+          if (!feedingDateTime) return false;
+          
+          return feedingDateTime >= feedingDayStart && feedingDateTime < feedingDayEnd;
+        } catch (error) {
+          console.error('Error filtering feeding day feedings:', error);
+          return false;
+        }
+      }).sort((a, b) => {
+        // Sort by time descending (most recent first)
+        try {
+          const timeA = parseFeedingDateTime(a);
+          const timeB = parseFeedingDateTime(b);
+          return timeB - timeA; // Most recent first
+        } catch (error) {
+          console.error('Error sorting feeding times:', error);
+          return 0;
+        }
+      });
     } catch (error) {
-      console.error('Error sorting times:', error);
-      return 0;
+      console.error('Error getting current feeding day feedings:', error);
+      return [];
     }
-  });
+  };
+  
+  const todaysFeedings = getCurrentFeedingDayFeedings();
 
   // Calculate time since last feeding - find most recent feed from any day
   const getTimeSinceLastFeeding = () => {
@@ -338,7 +353,7 @@ const FeedMeApp = () => {
       // For each night, calculate the longest gap
       Object.values(nights).forEach(nightFeedings => {
         try {
-          if (nightFeedings.length < 2) return;
+          if (nightFeedings.length === 0) return;
           
           // Sort by time within this night
           const sortedNightFeedings = nightFeedings.sort((a, b) => {
@@ -349,6 +364,7 @@ const FeedMeApp = () => {
           
           let longestGapMinutes = 0;
           
+          // Calculate gaps between consecutive feedings
           for (let i = 1; i < sortedNightFeedings.length; i++) {
             try {
               const current = sortedNightFeedings[i];
@@ -357,25 +373,53 @@ const FeedMeApp = () => {
               const currentTime = parseFeedingDateTime(current);
               const previousTime = parseFeedingDateTime(previous);
               
-              // Handle overnight gaps (previous feeding was yesterday, current is today)
-              let diffMs;
-              if (currentTime < previousTime) {
-                // Gap crosses midnight
-                const nextDay = new Date(currentTime);
-                nextDay.setDate(nextDay.getDate() + 1);
-                diffMs = nextDay - previousTime;
-              } else {
-                diffMs = currentTime - previousTime;
-              }
+              if (!currentTime || !previousTime) continue;
               
+              const diffMs = currentTime - previousTime;
               const gapMinutes = Math.floor(diffMs / (1000 * 60));
               
               // Cap at 12 hours to be realistic
-              if (gapMinutes <= 720 && gapMinutes > longestGapMinutes) {
+              if (gapMinutes <= 720 && gapMinutes > 0 && gapMinutes > longestGapMinutes) {
                 longestGapMinutes = gapMinutes;
               }
             } catch (err) {
-              console.error('Error calculating gap:', err);
+              console.error('Error calculating gap between feedings:', err);
+            }
+          }
+          
+          // Also check gap from last night feeding to 7am (end of night period)
+          if (sortedNightFeedings.length > 0) {
+            try {
+              const lastNightFeeding = sortedNightFeedings[sortedNightFeedings.length - 1];
+              const lastFeedingTime = parseFeedingDateTime(lastNightFeeding);
+              
+              if (lastFeedingTime) {
+                // Calculate 7am of the next day
+                const nextDaySevenAm = new Date(lastFeedingTime);
+                nextDaySevenAm.setDate(nextDaySevenAm.getDate() + 1);
+                nextDaySevenAm.setHours(7, 0, 0, 0);
+                
+                // If the last feeding was before 7am, it's already part of the night
+                // If it was after 7pm, calculate gap to next day 7am
+                const lastFeedingHour = lastFeedingTime.getHours();
+                if (lastFeedingHour >= 19) {
+                  // Last feeding was after 7pm, calculate gap to 7am next day
+                  const gapToSevenAm = Math.floor((nextDaySevenAm - lastFeedingTime) / (1000 * 60));
+                  if (gapToSevenAm > 0 && gapToSevenAm <= 720 && gapToSevenAm > longestGapMinutes) {
+                    longestGapMinutes = gapToSevenAm;
+                  }
+                } else if (lastFeedingHour < 7) {
+                  // Last feeding was before 7am same day, calculate gap to 7am same day
+                  const sameDay7Am = new Date(lastFeedingTime);
+                  sameDay7Am.setHours(7, 0, 0, 0);
+                  const gapToSevenAm = Math.floor((sameDay7Am - lastFeedingTime) / (1000 * 60));
+                  if (gapToSevenAm > 0 && gapToSevenAm <= 720 && gapToSevenAm > longestGapMinutes) {
+                    longestGapMinutes = gapToSevenAm;
+                  }
+                }
+              }
+            } catch (err) {
+              console.error('Error calculating gap to 7am:', err);
             }
           }
           
