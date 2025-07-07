@@ -3,7 +3,7 @@ import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings } 
 import { feedingService } from './feedingService';
 
 // AddFeedingScreen component extracted outside to prevent recreation
-const AddFeedingScreen = ({ 
+const AddFeedingScreen = React.memo(({ 
   selectedDate, 
   setSelectedDate,
   selectedTime, 
@@ -299,7 +299,7 @@ const AddFeedingScreen = ({
       </div>
     </div>
   </div>
-);
+));
 
 const FeedMeApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -1989,6 +1989,7 @@ const FeedMeApp = () => {
       {showSettings && <SettingsScreen />}
       {currentScreen === 'addFeeding' ? (
         <AddFeedingScreen 
+          key="add-feeding-screen"
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           selectedTime={selectedTime}
