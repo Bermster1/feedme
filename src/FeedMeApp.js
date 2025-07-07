@@ -232,25 +232,15 @@ const FeedMeApp = () => {
       const feedingHour = feedingDateTime.getHours();
       let customDayDate;
       
-      // Debug logging
-      console.log('Grouping feeding:', {
-        storedDate: feeding.date,
-        storedTime: feeding.time,
-        parsedDateTime: feedingDateTime,
-        feedingHour: feedingHour
-      });
-      
       if (feedingHour < 7) {
         // Before 7AM - belongs to previous day's 7am-7am cycle
         const prevDay = new Date(feedingDateTime);
         prevDay.setDate(feedingDateTime.getDate() - 1);
         customDayDate = prevDay.toISOString().split('T')[0];
-        console.log('Before 7AM - grouping under:', customDayDate);
       } else {
         // 7AM or later - belongs to current day's 7am-7am cycle
         // Use the calendar date as the cycle identifier
         customDayDate = feeding.date; // Use the stored calendar date, not parsed date
-        console.log('After 7AM - grouping under:', customDayDate);
       }
       
       if (!acc[customDayDate]) {
@@ -297,12 +287,6 @@ const FeedMeApp = () => {
       currentCustomDay = now.toISOString().split('T')[0];
     }
     
-    console.log('formatDate debug:', {
-      customDayDate,
-      currentCustomDay,
-      currentHour,
-      isCurrentDay: customDayDate === currentCustomDay
-    });
     
     // Calculate previous custom day
     const prevCustomDayDate = new Date(currentCustomDay + 'T00:00:00');
