@@ -123,6 +123,8 @@ const FeedMeApp = () => {
     try {
       if (allFeedings.length === 0) return "No feedings yet";
       
+      console.log('All feedings for last feeding calc:', allFeedings);
+      
       // Find the most recent feeding across all dates
       const allFeedingsSorted = [...allFeedings].sort((a, b) => {
         try {
@@ -136,6 +138,7 @@ const FeedMeApp = () => {
             
             const date = new Date(feeding.date);
             date.setHours(hour24, parseInt(minute), 0, 0);
+            console.log(`Feeding ${feeding.date} ${feeding.time} -> DateTime:`, date);
             return date;
           };
           
@@ -143,12 +146,15 @@ const FeedMeApp = () => {
           const dateB = getDateTime(b);
           return dateB - dateA; // Most recent first
         } catch (error) {
+          console.error('Error sorting feedings:', error);
           return 0;
         }
       });
       
+      console.log('Sorted feedings (most recent first):', allFeedingsSorted);
+      
       const lastFeeding = allFeedingsSorted[0];
-      console.log('Most recent feeding:', lastFeeding);
+      console.log('Most recent feeding selected:', lastFeeding);
       
       // Calculate time since this feeding
       const [time, period] = lastFeeding.time.split(' ');
@@ -161,7 +167,11 @@ const FeedMeApp = () => {
       lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
       
       const now = new Date();
+      console.log('Last feeding time:', lastFeedingTime);
+      console.log('Current time:', now);
+      
       const diffMs = now - lastFeedingTime;
+      console.log('Difference in ms:', diffMs);
       
       if (diffMs < 0) return "Just added";
       
@@ -169,7 +179,7 @@ const FeedMeApp = () => {
       const hours = Math.floor(diffMinutes / 60);
       const minutes = diffMinutes % 60;
       
-      console.log('Time since last feeding:', {diffMinutes, hours, minutes});
+      console.log('Time since last feeding calculation:', {diffMs, diffMinutes, hours, minutes});
       
       if (hours === 0) {
         return `${minutes}m`;
