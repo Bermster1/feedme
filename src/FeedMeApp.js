@@ -118,38 +118,50 @@ const FeedMeApp = () => {
     }
   });
 
-  // Calculate time since last feeding
+  // Calculate time since the most recent feeding across all dates
   const getTimeSinceLastFeeding = () => {
     try {
-      console.log('todaysFeedings length:', todaysFeedings.length);
-      console.log('todaysFeedings:', todaysFeedings);
+      if (allFeedings.length === 0) return "No feedings yet";
       
-      if (todaysFeedings.length === 0) return "No feedings yet";
+      // Find the most recent feeding across all dates
+      const allFeedingsSorted = [...allFeedings].sort((a, b) => {
+        try {
+          // Convert times to comparable values
+          const getDateTime = (feeding) => {
+            const [time, period] = feeding.time.split(' ');
+            const [hour, minute] = time.split(':');
+            let hour24 = parseInt(hour);
+            if (period === 'PM' && hour24 !== 12) hour24 += 12;
+            if (period === 'AM' && hour24 === 12) hour24 = 0;
+            
+            const date = new Date(feeding.date);
+            date.setHours(hour24, parseInt(minute), 0, 0);
+            return date;
+          };
+          
+          const dateA = getDateTime(a);
+          const dateB = getDateTime(b);
+          return dateB - dateA; // Most recent first
+        } catch (error) {
+          return 0;
+        }
+      });
       
-      const lastFeeding = todaysFeedings[0]; // Already sorted by most recent
-      console.log('lastFeeding:', lastFeeding);
+      const lastFeeding = allFeedingsSorted[0];
+      console.log('Most recent feeding:', lastFeeding);
       
-      // Manual time calculation
-      const now = new Date();
+      // Calculate time since this feeding
       const [time, period] = lastFeeding.time.split(' ');
       const [hour, minute] = time.split(':');
       let hour24 = parseInt(hour);
       if (period === 'PM' && hour24 !== 12) hour24 += 12;
       if (period === 'AM' && hour24 === 12) hour24 = 0;
       
-      const lastFeedingTime = new Date();
+      const lastFeedingTime = new Date(lastFeeding.date);
       lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
       
-      // If the feeding time is in the future, it was yesterday
-      if (lastFeedingTime > now) {
-        lastFeedingTime.setDate(lastFeedingTime.getDate() - 1);
-      }
-      
-      console.log('lastFeedingTime:', lastFeedingTime);
-      console.log('now:', now);
-      
+      const now = new Date();
       const diffMs = now - lastFeedingTime;
-      console.log('diffMs:', diffMs);
       
       if (diffMs < 0) return "Just added";
       
@@ -157,14 +169,14 @@ const FeedMeApp = () => {
       const hours = Math.floor(diffMinutes / 60);
       const minutes = diffMinutes % 60;
       
-      console.log('Time calculation:', {diffMinutes, hours, minutes});
+      console.log('Time since last feeding:', {diffMinutes, hours, minutes});
       
       if (hours === 0) {
-        return `${minutes}m ago`;
+        return `${minutes}m`;
       } else if (minutes === 0) {
-        return `${hours}h ago`;
+        return `${hours}h`;
       } else {
-        return `${hours}h ${minutes}m ago`;
+        return `${hours}h ${minutes}m`;
       }
     } catch (error) {
       console.error('Error calculating time since last feeding:', error);
@@ -1384,32 +1396,41 @@ const FeedMeApp = () => {
                 {/* Feedings for this date */}
                 <div>
                   {feedingsByDate[date].map((feeding, index) => {
-                    // Use the gap stored in the database if available
-                    let gap = feeding.gap;
+                    // Calculate gap from the previous feeding to this feeding
+                    let gap = null;
                     
-                    // If no stored gap, calculate it (for older entries)
-                    if (!gap) {
-                      const allFeedingsSorted = [...allFeedings].sort((a, b) => {
-                        try {
-                          const dateA = new Date(`${a.date}T${a.time}`);
-                          const dateB = new Date(`${b.date}T${b.time}`);
-                          return dateB - dateA; // Most recent first
-                        } catch (error) {
-                          return 0;
-                        }
-                      });
-                      
-                      const currentFeedingIndex = allFeedingsSorted.findIndex(f => f.id === feeding.id);
-                      
-                      // For the most recent feeding (index 0), show time since now
-                      if (currentFeedingIndex === 0) {
-                        gap = timeSinceLastFeeding !== "No feedings yet" ? timeSinceLastFeeding : null;
-                      } else if (currentFeedingIndex > 0) {
-                        // Calculate gap from previous feeding
-                        const previousFeeding = allFeedingsSorted[currentFeedingIndex - 1];
-                        gap = calculateGapBetweenFeedings(previousFeeding, feeding);
+                    // Get all feedings sorted chronologically (oldest first)
+                    const allFeedingsSorted = [...allFeedings].sort((a, b) => {
+                      try {
+                        const getDateTime = (f) => {
+                          const [time, period] = f.time.split(' ');
+                          const [hour, minute] = time.split(':');
+                          let hour24 = parseInt(hour);
+                          if (period === 'PM' && hour24 !== 12) hour24 += 12;
+                          if (period === 'AM' && hour24 === 12) hour24 = 0;
+                          
+                          const date = new Date(f.date);
+                          date.setHours(hour24, parseInt(minute), 0, 0);
+                          return date;
+                        };
+                        
+                        const dateA = getDateTime(a);
+                        const dateB = getDateTime(b);
+                        return dateA - dateB; // Oldest first
+                      } catch (error) {
+                        return 0;
                       }
+                    });
+                    
+                    const currentFeedingIndex = allFeedingsSorted.findIndex(f => f.id === feeding.id);
+                    
+                    // If there's a previous feeding, calculate gap from previous to this
+                    if (currentFeedingIndex > 0) {
+                      const previousFeeding = allFeedingsSorted[currentFeedingIndex - 1];
+                      gap = calculateGapBetweenFeedings(feeding, previousFeeding);
                     }
+                    
+                    console.log(`Feeding ${feeding.time}: gap = ${gap}`);
                     
                     return (
                       <div key={feeding.id} style={styles.feedingCard}>
