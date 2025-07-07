@@ -12,6 +12,9 @@ const FeedMeApp = () => {
     hour = hour % 12 || 12;
     return { hour, minute, period };
   });
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Date().toISOString().split('T')[0]; // Default to today's calendar date
+  });
   const [selectedOunces, setSelectedOunces] = useState(null);
   const [customOunces, setCustomOunces] = useState('');
   const [notes, setNotes] = useState('');
@@ -71,9 +74,34 @@ const FeedMeApp = () => {
     return feedingDate.toISOString().split('T')[0];
   };
 
-  // Get today's date for new feedings
+  // Get current calendar date for new feedings
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0];
+  };
+  
+  // Get feeding day date for a given calendar date (used for display grouping)
+  const getFeedingDayForDate = (calendarDate, time) => {
+    const [year, month, day] = calendarDate.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
+    // Parse time to get hour
+    let hour;
+    if (time && time.includes(' ')) {
+      const [timeStr, period] = time.split(' ');
+      const [hourStr] = timeStr.split(':');
+      hour = parseInt(hourStr);
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+    } else {
+      hour = 12; // Default assumption
+    }
+    
+    // If before 7am, the feeding day is the previous calendar day
+    if (hour < 7) {
+      date.setDate(date.getDate() - 1);
+    }
+    
+    return date.toISOString().split('T')[0];
   };
 
   // Helper function to parse feeding date/time without timezone issues
@@ -106,16 +134,8 @@ const FeedMeApp = () => {
     }
   };
 
-  // Get today's feedings - simple date string comparison
-  const getTodayString = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
-  // Get current feeding day's feedings (7am to 7am cycle)
+  // Get current feeding day's feedings (7am to 7am cycle) for calculating totals
   const getCurrentFeedingDayFeedings = () => {
     try {
       const now = new Date();
@@ -202,14 +222,38 @@ const FeedMeApp = () => {
     }
   };
   
-  // Group feedings by date for display
-  const feedingsByDate = allFeedings.reduce((acc, feeding) => {
-    if (!acc[feeding.date]) {
-      acc[feeding.date] = [];
+  // Group feedings by custom 7AM-7AM day cycle for home page display
+  const feedingsByCustomDay = allFeedings.reduce((acc, feeding) => {
+    try {
+      const feedingDateTime = parseFeedingDateTime(feeding);
+      if (!feedingDateTime) return acc;
+      
+      // Determine which "custom day" this feeding belongs to (7AM to 7AM cycle)
+      const feedingHour = feedingDateTime.getHours();
+      let customDayDate;
+      
+      if (feedingHour < 7) {
+        // Before 7AM - belongs to previous day's cycle
+        const prevDay = new Date(feedingDateTime);
+        prevDay.setDate(feedingDateTime.getDate() - 1);
+        customDayDate = prevDay.toISOString().split('T')[0];
+      } else {
+        // 7AM or later - belongs to current day's cycle
+        customDayDate = feedingDateTime.toISOString().split('T')[0];
+      }
+      
+      if (!acc[customDayDate]) {
+        acc[customDayDate] = [];
+      }
+      acc[customDayDate].push(feeding);
+      return acc;
+    } catch (error) {
+      console.error('Error grouping feeding by custom day:', error);
+      return acc;
     }
-    acc[feeding.date].push(feeding);
-    return acc;
   }, {});
+  
+  const feedingsByDate = feedingsByCustomDay;
 
   // Get unique dates in reverse chronological order
   const dates = Object.keys(feedingsByDate).sort().reverse();
@@ -221,19 +265,35 @@ const FeedMeApp = () => {
 
   const presetOunces = [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7];
 
-  // Helper function to format date
-  const formatDate = (dateString) => {
+  // Helper function to format date for display using custom 7AM-7AM day cycle
+  const formatDate = (customDayDate) => {
     // Fix timezone issue by parsing date components manually
-    const [year, month, day] = dateString.split('-');
+    const [year, month, day] = customDayDate.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Determine current custom day (7AM-7AM cycle)
+    const now = new Date();
+    const currentHour = now.getHours();
+    let currentCustomDay;
     
-    if (dateString === today.toISOString().split('T')[0]) {
+    if (currentHour < 7) {
+      // Before 7AM - current custom day started yesterday
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      currentCustomDay = yesterday.toISOString().split('T')[0];
+    } else {
+      // 7AM or later - current custom day is today
+      currentCustomDay = now.toISOString().split('T')[0];
+    }
+    
+    // Calculate previous custom day
+    const prevCustomDayDate = new Date(currentCustomDay + 'T00:00:00');
+    prevCustomDayDate.setDate(prevCustomDayDate.getDate() - 1);
+    const previousCustomDay = prevCustomDayDate.toISOString().split('T')[0];
+    
+    if (customDayDate === currentCustomDay) {
       return `Today • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
-    } else if (dateString === yesterday.toISOString().split('T')[0]) {
+    } else if (customDayDate === previousCustomDay) {
       return `Yesterday • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
     } else {
       return date.toLocaleDateString('en-US', { 
@@ -634,7 +694,7 @@ const FeedMeApp = () => {
         }
         
         const newFeeding = {
-          date: getTodayDate(),
+          date: selectedDate,
           time: timeString,
           ounces: ounces,
           notes: notes || null,
@@ -642,7 +702,15 @@ const FeedMeApp = () => {
         };
         
         const savedFeeding = await feedingService.addFeeding(newFeeding);
-        setAllFeedings([savedFeeding, ...allFeedings]);
+        
+        // Insert feeding in chronological order by actual feeding time
+        const newFeedingsList = [...allFeedings, savedFeeding].sort((a, b) => {
+          const timeA = parseFeedingDateTime(a);
+          const timeB = parseFeedingDateTime(b);
+          return timeB - timeA; // Most recent first (descending chronological order)
+        });
+        
+        setAllFeedings(newFeedingsList);
         
         // Reset time to current time for next feeding
         const now = new Date();
@@ -674,6 +742,9 @@ const FeedMeApp = () => {
     hour = hour % 12 || 12;
     setSelectedTime({ hour, minute, period });
     
+    // Reset date to current calendar date
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+    
     setSelectedOunces(null);
     setCustomOunces('');
     setNotes('');
@@ -686,6 +757,9 @@ const FeedMeApp = () => {
     setSelectedOunces(feeding.ounces);
     setCustomOunces('');
     setNotes(feeding.notes || '');
+    
+    // Set the date from the feeding
+    setSelectedDate(feeding.date);
     
     // Parse time
     const [time, period] = feeding.time.split(' ');
@@ -729,7 +803,17 @@ const FeedMeApp = () => {
         };
         
         const updatedFeeding = await feedingService.updateFeeding(editingFeeding.id, updates);
-        setAllFeedings(allFeedings.map(f => f.id === editingFeeding.id ? updatedFeeding : f));
+        
+        // Update feeding and resort chronologically by actual feeding time
+        const updatedFeedingsList = allFeedings
+          .map(f => f.id === editingFeeding.id ? updatedFeeding : f)
+          .sort((a, b) => {
+            const timeA = parseFeedingDateTime(a);
+            const timeB = parseFeedingDateTime(b);
+            return timeB - timeA; // Most recent first (descending chronological order)
+          });
+        
+        setAllFeedings(updatedFeedingsList);
         
         setSelectedOunces(null);
         setCustomOunces('');
@@ -1163,72 +1247,137 @@ const FeedMeApp = () => {
       </div>
 
       <div style={styles.formContainer}>
-        {/* Time Selection */}
+        {/* Date and Time Selection - Side by Side */}
         <div style={styles.formSection}>
           <div style={styles.formLabel}>
             <Clock size={20} color="#007AFF" />
-            <label>Start Time</label>
+            <label>Date & Time</label>
           </div>
           
-          <div style={{position: 'relative'}}>
-            <input
-              type="time"
-              value={(() => {
-                // Convert 12-hour to 24-hour for input value
-                let hour24 = selectedTime.hour;
-                if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
-                  hour24 += 12;
-                }
-                if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
-                  hour24 = 0;
-                }
-                return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
-              })()}
-              onChange={(e) => {
-                const [hour24Str, minuteStr] = e.target.value.split(':');
-                const hour24 = parseInt(hour24Str);
-                const minute = parseInt(minuteStr);
-                
-                let hour12 = hour24;
-                const period = hour24 >= 12 ? 'PM' : 'AM';
-                if (hour24 > 12) hour12 -= 12;
-                if (hour24 === 0) hour12 = 12;
-                
-                setSelectedTime({
-                  hour: hour12,
-                  minute: minute,
-                  period: period
-                });
-              }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                cursor: 'pointer'
-              }}
-            />
-            <div
-              style={{
-                width: '100%',
-                padding: '1rem',
-                backgroundColor: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                pointerEvents: 'none'
-              }}
-            >
-              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-                Today, {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
-              </span>
-              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>›</span>
+          <div style={{display: 'flex', gap: '0.75rem'}}>
+            {/* Date Selection (Left Side) */}
+            <div style={{flex: 1, position: 'relative'}}>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer'
+                }}
+              />
+              <div
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  pointerEvents: 'none',
+                  minHeight: '50px'
+                }}
+              >
+                <span style={{color: '#007AFF', fontSize: '0.95rem'}}>
+                  {(() => {
+                    const date = new Date(selectedDate + 'T00:00:00');
+                    const today = new Date();
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    
+                    const dateStr = selectedDate;
+                    const todayStr = today.toISOString().split('T')[0];
+                    const yesterdayStr = yesterday.toISOString().split('T')[0];
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    
+                    if (dateStr === todayStr) {
+                      return `Today\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                    } else if (dateStr === yesterdayStr) {
+                      return `Yesterday\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                    } else if (dateStr === tomorrowStr) {
+                      return `Tomorrow\n${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                    } else {
+                      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    }
+                  })()}
+                </span>
+                <span style={{color: '#007AFF', fontSize: '1rem'}}>📅</span>
+              </div>
+            </div>
+
+            {/* Time Selection (Right Side) */}
+            <div style={{flex: 1, position: 'relative'}}>
+              <input
+                type="time"
+                value={(() => {
+                  // Convert 12-hour to 24-hour for input value
+                  let hour24 = selectedTime.hour;
+                  if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
+                    hour24 += 12;
+                  }
+                  if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
+                    hour24 = 0;
+                  }
+                  return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
+                })()}
+                onChange={(e) => {
+                  const [hour24Str, minuteStr] = e.target.value.split(':');
+                  const hour24 = parseInt(hour24Str);
+                  const minute = parseInt(minuteStr);
+                  
+                  let hour12 = hour24;
+                  const period = hour24 >= 12 ? 'PM' : 'AM';
+                  if (hour24 > 12) hour12 -= 12;
+                  if (hour24 === 0) hour12 = 12;
+                  
+                  setSelectedTime({
+                    hour: hour12,
+                    minute: minute,
+                    period: period
+                  });
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer'
+                }}
+              />
+              <div
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  pointerEvents: 'none',
+                  minHeight: '50px'
+                }}
+              >
+                <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+                  {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+                </span>
+                <span style={{color: '#007AFF', fontSize: '1rem'}}>🕐</span>
+              </div>
             </div>
           </div>
         </div>
