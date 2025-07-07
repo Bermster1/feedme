@@ -1069,28 +1069,21 @@ const FeedMeApp = () => {
             <label>Start Time</label>
           </div>
           
-          <button
-            onClick={() => {
-              // Create a time input element and trigger it
-              const input = document.createElement('input');
-              input.type = 'time';
-              
-              // Convert 12-hour to 24-hour for input value
-              let hour24 = selectedTime.hour;
-              if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
-                hour24 += 12;
-              }
-              if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
-                hour24 = 0;
-              }
-              
-              input.value = `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
-              input.style.position = 'absolute';
-              input.style.opacity = '0';
-              input.style.pointerEvents = 'none';
-              document.body.appendChild(input);
-              
-              input.onchange = (e) => {
+          <div style={{position: 'relative'}}>
+            <input
+              type="time"
+              value={(() => {
+                // Convert 12-hour to 24-hour for input value
+                let hour24 = selectedTime.hour;
+                if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
+                  hour24 += 12;
+                }
+                if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
+                  hour24 = 0;
+                }
+                return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
+              })()}
+              onChange={(e) => {
                 const [hour24Str, minuteStr] = e.target.value.split(':');
                 const hour24 = parseInt(hour24Str);
                 const minute = parseInt(minuteStr);
@@ -1105,30 +1098,38 @@ const FeedMeApp = () => {
                   minute: minute,
                   period: period
                 });
-                
-                document.body.removeChild(input);
-              };
-              
-              input.click();
-            }}
-            style={{
-              width: '100%',
-              padding: '1rem',
-              backgroundColor: 'white',
-              border: '1px solid #d1d5db',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              fontSize: '1rem'
-            }}
-          >
-            <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-              Today, {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
-            </span>
-            <span style={{color: '#007AFF', fontSize: '1.1rem'}}>›</span>
-          </button>
+              }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer'
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                padding: '1rem',
+                backgroundColor: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                pointerEvents: 'none'
+              }}
+            >
+              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+                Today, {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+              </span>
+              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>›</span>
+            </div>
+          </div>
         </div>
 
         {/* Ounces Selection */}
