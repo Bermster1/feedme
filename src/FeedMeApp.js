@@ -233,13 +233,14 @@ const FeedMeApp = () => {
       let customDayDate;
       
       if (feedingHour < 7) {
-        // Before 7AM - belongs to previous day's cycle
+        // Before 7AM - belongs to previous day's 7am-7am cycle
         const prevDay = new Date(feedingDateTime);
         prevDay.setDate(feedingDateTime.getDate() - 1);
         customDayDate = prevDay.toISOString().split('T')[0];
       } else {
-        // 7AM or later - belongs to current day's cycle
-        customDayDate = feedingDateTime.toISOString().split('T')[0];
+        // 7AM or later - belongs to current day's 7am-7am cycle
+        // Use the calendar date as the cycle identifier
+        customDayDate = feeding.date; // Use the stored calendar date, not parsed date
       }
       
       if (!acc[customDayDate]) {
