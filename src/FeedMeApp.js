@@ -297,6 +297,13 @@ const FeedMeApp = () => {
       currentCustomDay = now.toISOString().split('T')[0];
     }
     
+    console.log('formatDate debug:', {
+      customDayDate,
+      currentCustomDay,
+      currentHour,
+      isCurrentDay: customDayDate === currentCustomDay
+    });
+    
     // Calculate previous custom day
     const prevCustomDayDate = new Date(currentCustomDay + 'T00:00:00');
     prevCustomDayDate.setDate(prevCustomDayDate.getDate() - 1);
