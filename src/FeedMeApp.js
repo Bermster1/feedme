@@ -76,32 +76,56 @@ const FeedMeApp = () => {
     return new Date().toISOString().split('T')[0];
   };
 
-  // Get today's feedings (7am to 7am cycle)
+  // Get today's feedings - simplified approach
   const todaysFeedings = allFeedings.filter(f => {
     try {
-      const feedingDateTime = new Date(`${f.date}T${f.time}`);
-      return getFeedingDay(feedingDateTime) === getFeedingDay(new Date());
+      // Simple date comparison - just check if the date matches today
+      const today = new Date().toISOString().split('T')[0];
+      const isToday = f.date === today;
+      
+      console.log('Checking feeding:', f.date, f.time, 'isToday:', isToday, 'today:', today);
+      return isToday;
     } catch (error) {
       console.error('Error filtering today\'s feedings:', error);
       return false;
+    }
+  }).sort((a, b) => {
+    // Sort by time descending (most recent first)
+    try {
+      const timeA = new Date(`${a.date} ${a.time}`);
+      const timeB = new Date(`${b.date} ${b.time}`);
+      return timeB - timeA;
+    } catch (error) {
+      return 0;
     }
   });
 
   // Calculate time since last feeding
   const getTimeSinceLastFeeding = () => {
     try {
+      console.log('todaysFeedings length:', todaysFeedings.length);
+      console.log('todaysFeedings:', todaysFeedings);
+      
       if (todaysFeedings.length === 0) return "No feedings yet";
       
       const lastFeeding = todaysFeedings[0]; // Already sorted by most recent
-      const lastFeedingTime = new Date(`${lastFeeding.date}T${lastFeeding.time}`);
+      console.log('lastFeeding:', lastFeeding);
+      
+      // Simple approach - use native Date parsing
+      const lastFeedingTime = new Date(`${lastFeeding.date} ${lastFeeding.time}`);
+      console.log('lastFeedingTime:', lastFeedingTime);
+      
       const now = new Date();
       const diffMs = now - lastFeedingTime;
+      console.log('diffMs:', diffMs);
       
       if (diffMs < 0) return "Just added";
       
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
       const hours = Math.floor(diffMinutes / 60);
       const minutes = diffMinutes % 60;
+      
+      console.log('Time calculation:', {diffMinutes, hours, minutes});
       
       if (hours === 0) {
         return `${minutes}m ago`;
@@ -128,7 +152,11 @@ const FeedMeApp = () => {
   // Get unique dates in reverse chronological order
   const dates = Object.keys(feedingsByDate).sort().reverse();
 
-  const totalOunces = todaysFeedings.reduce((sum, feeding) => sum + feeding.ounces, 0);
+  const totalOunces = todaysFeedings.reduce((sum, feeding) => {
+    console.log('Adding ounces:', feeding.ounces, 'current sum:', sum);
+    return sum + feeding.ounces;
+  }, 0);
+  console.log('Final totalOunces:', totalOunces);
   const timeSinceLastFeeding = getTimeSinceLastFeeding();
 
   const presetOunces = [1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7];
