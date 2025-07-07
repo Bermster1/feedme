@@ -1467,11 +1467,14 @@ const FeedMeApp = () => {
             Notes (optional)
           </label>
           <textarea
+            key="notes-textarea"
             value={notes}
             onChange={(e) => {
               console.log('Notes onChange:', e.target.value);
               setNotes(e.target.value);
             }}
+            onFocus={() => console.log('Notes field focused')}
+            onBlur={() => console.log('Notes field lost focus')}
             placeholder="Any additional notes..."
             rows={3}
             style={{
