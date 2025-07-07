@@ -1472,9 +1472,14 @@ const FeedMeApp = () => {
             placeholder="Any additional notes..."
             rows={3}
             style={{
-              ...styles.input,
+              width: '100%',
+              padding: '1rem',
+              border: '1px solid #d1d5db',
+              borderRadius: '0.75rem',
+              fontSize: '1rem',
               resize: 'none',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              outline: 'none'
             }}
           />
         </div>
