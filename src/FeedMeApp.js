@@ -2,6 +2,305 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings } from 'lucide-react';
 import { feedingService } from './feedingService';
 
+// AddFeedingScreen component extracted outside to prevent recreation
+const AddFeedingScreen = ({ 
+  selectedDate, 
+  setSelectedDate,
+  selectedTime, 
+  setSelectedTime,
+  selectedOunces, 
+  setSelectedOunces,
+  customOunces, 
+  setCustomOunces,
+  notes, 
+  setNotes,
+  editingFeeding,
+  handleCancelFeeding,
+  handleSaveFeeding,
+  handleUpdateFeeding,
+  loading,
+  styles,
+  presetOunces 
+}) => (
+  <div>
+    {/* Header */}
+    <div style={{...styles.header, justifyContent: 'space-between'}}>
+      <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem'}}>
+        <X size={24} color="#6b7280" />
+      </button>
+      <h1 style={{fontSize: '1.25rem', fontWeight: '600', color: '#1f2937'}}>
+        {editingFeeding ? 'Edit Feeding' : 'Add Feeding'}
+      </h1>
+      <div style={{width: '40px'}}></div>
+    </div>
+
+    <div style={styles.formContainer}>
+      {/* Date and Time Selection */}
+      <div style={styles.formSection}>
+        <div style={styles.formLabel}>
+          <Clock size={20} color="#007AFF" />
+          <label>Date & Time</label>
+        </div>
+        
+        {/* Date Selection */}
+        <div style={{marginBottom: '1rem'}}>
+          <div style={{
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#6b7280',
+            marginBottom: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            📅 <span>Date</span>
+          </div>
+          <div style={{position: 'relative'}}>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer'
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                padding: '0.875rem',
+                backgroundColor: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                pointerEvents: 'none',
+                minHeight: '48px'
+              }}
+            >
+              <span style={{color: '#007AFF', fontSize: '1rem', lineHeight: '1.2'}}>
+                {(() => {
+                  const date = new Date(selectedDate + 'T00:00:00');
+                  const today = new Date();
+                  const yesterday = new Date(today);
+                  yesterday.setDate(today.getDate() - 1);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(today.getDate() + 1);
+                  
+                  const dateStr = selectedDate;
+                  const todayStr = today.toISOString().split('T')[0];
+                  const yesterdayStr = yesterday.toISOString().split('T')[0];
+                  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                  
+                  if (dateStr === todayStr) {
+                    return `Today, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                  } else if (dateStr === yesterdayStr) {
+                    return `Yesterday, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                  } else if (dateStr === tomorrowStr) {
+                    return `Tomorrow, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                  } else {
+                    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                  }
+                })()}
+              </span>
+              <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Time Selection */}
+        <div>
+          <div style={{
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#6b7280',
+            marginBottom: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            🕐 <span>Time</span>
+          </div>
+          <div style={{position: 'relative'}}>
+            <input
+              type="time"
+              value={(() => {
+                // Convert 12-hour to 24-hour for input value
+                let hour24 = selectedTime.hour;
+                if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
+                  hour24 += 12;
+                }
+                if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
+                  hour24 = 0;
+                }
+                return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
+              })()}
+              onChange={(e) => {
+                const [hour24Str, minuteStr] = e.target.value.split(':');
+                const hour24 = parseInt(hour24Str);
+                const minute = parseInt(minuteStr);
+                
+                let hour12 = hour24;
+                const period = hour24 >= 12 ? 'PM' : 'AM';
+                if (hour24 > 12) hour12 -= 12;
+                if (hour24 === 0) hour12 = 12;
+                
+                setSelectedTime({
+                  hour: hour12,
+                  minute: minute,
+                  period: period
+                });
+              }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer'
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                padding: '0.875rem',
+                backgroundColor: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                pointerEvents: 'none',
+                minHeight: '48px'
+              }}
+            >
+              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+                {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+              </span>
+              <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ounces Selection */}
+      <div style={styles.formSection}>
+        <div style={styles.formLabel}>
+          <Droplets size={20} color="#3b82f6" />
+          <label>Ounces</label>
+          <span style={{fontSize: '0.875rem', color: '#6b7280'}}>(optional)</span>
+        </div>
+
+        {/* Preset Buttons */}
+        <div style={styles.presetGrid}>
+          {presetOunces.map((ounce) => (
+            <button
+              key={ounce}
+              onClick={() => {
+                setSelectedOunces(ounce);
+                setCustomOunces('');
+              }}
+              style={{
+                ...styles.presetBtn,
+                ...(selectedOunces === ounce ? styles.presetBtnSelected : styles.presetBtnUnselected)
+              }}
+            >
+              {ounce}oz
+            </button>
+          ))}
+        </div>
+
+        {/* Custom Input */}
+        <div style={{position: 'relative'}}>
+          <input
+            type="number"
+            step="0.1"
+            placeholder="Custom amount"
+            value={customOunces}
+            onChange={(e) => {
+              setCustomOunces(e.target.value);
+              setSelectedOunces(null);
+            }}
+            style={styles.input}
+          />
+          <span style={{
+            position: 'absolute',
+            right: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#6b7280'
+          }}>oz</span>
+        </div>
+      </div>
+
+      {/* Notes Section */}
+      <div style={styles.formSection}>
+        <label style={{fontSize: '1.125rem', fontWeight: '500', color: '#1f2937', marginBottom: '1rem', display: 'block'}}>
+          Notes (optional)
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => {
+            console.log('Notes onChange:', e.target.value);
+            setNotes(e.target.value);
+          }}
+          onFocus={() => console.log('Notes field focused')}
+          onBlur={() => console.log('Notes field lost focus')}
+          placeholder="Any additional notes..."
+          rows={3}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            resize: 'none',
+            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
+    </div>
+
+    {/* Action Buttons */}
+    <div style={styles.actionButtons}>
+      <div style={styles.buttonContainer}>
+        <button
+          onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
+          disabled={loading}
+          style={{
+            ...styles.primaryBtn,
+            opacity: loading ? 0.6 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          <Check size={20} />
+          <span>{loading ? (editingFeeding ? 'Updating...' : 'Saving...') : (editingFeeding ? 'Update Feeding' : 'Save Feeding')}</span>
+        </button>
+        
+        <button
+          onClick={handleCancelFeeding}
+          style={styles.secondaryBtn}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const FeedMeApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -1237,288 +1536,6 @@ const FeedMeApp = () => {
     </div>
   );
 
-  // Add Feeding Screen with FULL functionality
-  const AddFeedingScreen = () => (
-    <div>
-      {/* Header */}
-      <div style={{...styles.header, justifyContent: 'space-between'}}>
-        <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem'}}>
-          <X size={24} color="#6b7280" />
-        </button>
-        <h1 style={{fontSize: '1.25rem', fontWeight: '600', color: '#1f2937'}}>
-          {editingFeeding ? 'Edit Feeding' : 'Add Feeding'}
-        </h1>
-        <div style={{width: '40px'}}></div>
-      </div>
-
-      <div style={styles.formContainer}>
-        {/* Date and Time Selection - Side by Side */}
-        <div style={styles.formSection}>
-          <div style={styles.formLabel}>
-            <Clock size={20} color="#007AFF" />
-            <label>Date & Time</label>
-          </div>
-          
-          {/* Date Selection */}
-          <div style={{marginBottom: '1rem'}}>
-            <div style={{
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#6b7280',
-              marginBottom: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              📅 <span>Date</span>
-            </div>
-            <div style={{position: 'relative'}}>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer'
-                }}
-              />
-              <div
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  pointerEvents: 'none',
-                  minHeight: '48px'
-                }}
-              >
-                <span style={{color: '#007AFF', fontSize: '1rem', lineHeight: '1.2'}}>
-                  {(() => {
-                    const date = new Date(selectedDate + 'T00:00:00');
-                    const today = new Date();
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(today.getDate() + 1);
-                    
-                    const dateStr = selectedDate;
-                    const todayStr = today.toISOString().split('T')[0];
-                    const yesterdayStr = yesterday.toISOString().split('T')[0];
-                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-                    
-                    if (dateStr === todayStr) {
-                      return `Today, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-                    } else if (dateStr === yesterdayStr) {
-                      return `Yesterday, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-                    } else if (dateStr === tomorrowStr) {
-                      return `Tomorrow, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-                    } else {
-                      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                    }
-                  })()}
-                </span>
-                <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Time Selection */}
-          <div>
-            <div style={{
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#6b7280',
-              marginBottom: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              🕐 <span>Time</span>
-            </div>
-            <div style={{position: 'relative'}}>
-              <input
-                type="time"
-                value={(() => {
-                  // Convert 12-hour to 24-hour for input value
-                  let hour24 = selectedTime.hour;
-                  if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
-                    hour24 += 12;
-                  }
-                  if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
-                    hour24 = 0;
-                  }
-                  return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
-                })()}
-                onChange={(e) => {
-                  const [hour24Str, minuteStr] = e.target.value.split(':');
-                  const hour24 = parseInt(hour24Str);
-                  const minute = parseInt(minuteStr);
-                  
-                  let hour12 = hour24;
-                  const period = hour24 >= 12 ? 'PM' : 'AM';
-                  if (hour24 > 12) hour12 -= 12;
-                  if (hour24 === 0) hour12 = 12;
-                  
-                  setSelectedTime({
-                    hour: hour12,
-                    minute: minute,
-                    period: period
-                  });
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer'
-                }}
-              />
-              <div
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  pointerEvents: 'none',
-                  minHeight: '48px'
-                }}
-              >
-                <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-                  {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
-                </span>
-                <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Ounces Selection */}
-        <div style={styles.formSection}>
-          <div style={styles.formLabel}>
-            <Droplets size={20} color="#3b82f6" />
-            <label>Ounces</label>
-            <span style={{fontSize: '0.875rem', color: '#6b7280'}}>(optional)</span>
-          </div>
-
-          {/* Preset Buttons */}
-          <div style={styles.presetGrid}>
-            {presetOunces.map((ounce) => (
-              <button
-                key={ounce}
-                onClick={() => {
-                  setSelectedOunces(ounce);
-                  setCustomOunces('');
-                }}
-                style={{
-                  ...styles.presetBtn,
-                  ...(selectedOunces === ounce ? styles.presetBtnSelected : styles.presetBtnUnselected)
-                }}
-              >
-                {ounce}oz
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Input */}
-          <div style={{position: 'relative'}}>
-            <input
-              type="number"
-              step="0.1"
-              placeholder="Custom amount"
-              value={customOunces}
-              onChange={(e) => {
-                setCustomOunces(e.target.value);
-                setSelectedOunces(null);
-              }}
-              style={styles.input}
-            />
-            <span style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#6b7280'
-            }}>oz</span>
-          </div>
-        </div>
-
-        {/* Notes Section */}
-        <div style={styles.formSection}>
-          <label style={{fontSize: '1.125rem', fontWeight: '500', color: '#1f2937', marginBottom: '1rem', display: 'block'}}>
-            Notes (optional)
-          </label>
-          <textarea
-            key="notes-textarea"
-            value={notes}
-            onChange={(e) => {
-              console.log('Notes onChange:', e.target.value);
-              setNotes(e.target.value);
-            }}
-            onFocus={() => console.log('Notes field focused')}
-            onBlur={() => console.log('Notes field lost focus')}
-            placeholder="Any additional notes..."
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '1rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              resize: 'none',
-              fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-          />
-        </div>
-      </div>
-
-
-      {/* Action Buttons */}
-      <div style={styles.actionButtons}>
-        <div style={styles.buttonContainer}>
-          <button
-            onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
-            disabled={loading}
-            style={{
-              ...styles.primaryBtn,
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <Check size={20} />
-            <span>{loading ? (editingFeeding ? 'Updating...' : 'Saving...') : (editingFeeding ? 'Update Feeding' : 'Save Feeding')}</span>
-          </button>
-          
-          <button
-            onClick={handleCancelFeeding}
-            style={styles.secondaryBtn}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   // Home Screen with Starbucks-style design
   const HomeScreen = () => (
@@ -1971,7 +1988,25 @@ const FeedMeApp = () => {
     <div style={styles.app}>
       {showSettings && <SettingsScreen />}
       {currentScreen === 'addFeeding' ? (
-        <AddFeedingScreen />
+        <AddFeedingScreen 
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          selectedTime={selectedTime}
+          setSelectedTime={setSelectedTime}
+          selectedOunces={selectedOunces}
+          setSelectedOunces={setSelectedOunces}
+          customOunces={customOunces}
+          setCustomOunces={setCustomOunces}
+          notes={notes}
+          setNotes={setNotes}
+          editingFeeding={editingFeeding}
+          handleCancelFeeding={handleCancelFeeding}
+          handleSaveFeeding={handleSaveFeeding}
+          handleUpdateFeeding={handleUpdateFeeding}
+          loading={loading}
+          styles={styles}
+          presetOunces={presetOunces}
+        />
       ) : (
         <>
           {activeTab === 'home' && <HomeScreen />}
