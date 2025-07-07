@@ -1468,18 +1468,22 @@ const FeedMeApp = () => {
           </label>
           <textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              console.log('Notes onChange:', e.target.value);
+              setNotes(e.target.value);
+            }}
             placeholder="Any additional notes..."
             rows={3}
             style={{
               width: '100%',
               padding: '1rem',
               border: '1px solid #d1d5db',
-              borderRadius: '0.75rem',
+              borderRadius: '8px',
               fontSize: '1rem',
               resize: 'none',
-              fontFamily: 'inherit',
-              outline: 'none'
+              fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+              outline: 'none',
+              boxSizing: 'border-box'
             }}
           />
         </div>
