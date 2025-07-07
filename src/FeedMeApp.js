@@ -76,14 +76,21 @@ const FeedMeApp = () => {
     return new Date().toISOString().split('T')[0];
   };
 
-  // Get today's feedings - simplified approach
+  // Get today's feedings - simple date string comparison
+  const getTodayString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const todaysFeedings = allFeedings.filter(f => {
     try {
-      // Simple date comparison - just check if the date matches today
-      const today = new Date().toISOString().split('T')[0];
-      const isToday = f.date === today;
+      const todayString = getTodayString();
+      const isToday = f.date === todayString;
       
-      console.log('Checking feeding:', f.date, f.time, 'isToday:', isToday, 'today:', today);
+      console.log('Checking feeding:', f.date, f.time, 'isToday:', isToday, 'todayString:', todayString);
       return isToday;
     } catch (error) {
       console.error('Error filtering today\'s feedings:', error);
@@ -92,10 +99,21 @@ const FeedMeApp = () => {
   }).sort((a, b) => {
     // Sort by time descending (most recent first)
     try {
-      const timeA = new Date(`${a.date} ${a.time}`);
-      const timeB = new Date(`${b.date} ${b.time}`);
-      return timeB - timeA;
+      // Simple time comparison - convert to minutes since midnight
+      const getMinutesSinceMidnight = (timeStr) => {
+        const [time, period] = timeStr.split(' ');
+        const [hour, minute] = time.split(':');
+        let hour24 = parseInt(hour);
+        if (period === 'PM' && hour24 !== 12) hour24 += 12;
+        if (period === 'AM' && hour24 === 12) hour24 = 0;
+        return hour24 * 60 + parseInt(minute);
+      };
+      
+      const timeA = getMinutesSinceMidnight(a.time);
+      const timeB = getMinutesSinceMidnight(b.time);
+      return timeB - timeA; // Most recent first
     } catch (error) {
+      console.error('Error sorting times:', error);
       return 0;
     }
   });
@@ -111,11 +129,25 @@ const FeedMeApp = () => {
       const lastFeeding = todaysFeedings[0]; // Already sorted by most recent
       console.log('lastFeeding:', lastFeeding);
       
-      // Simple approach - use native Date parsing
-      const lastFeedingTime = new Date(`${lastFeeding.date} ${lastFeeding.time}`);
-      console.log('lastFeedingTime:', lastFeedingTime);
-      
+      // Manual time calculation
       const now = new Date();
+      const [time, period] = lastFeeding.time.split(' ');
+      const [hour, minute] = time.split(':');
+      let hour24 = parseInt(hour);
+      if (period === 'PM' && hour24 !== 12) hour24 += 12;
+      if (period === 'AM' && hour24 === 12) hour24 = 0;
+      
+      const lastFeedingTime = new Date();
+      lastFeedingTime.setHours(hour24, parseInt(minute), 0, 0);
+      
+      // If the feeding time is in the future, it was yesterday
+      if (lastFeedingTime > now) {
+        lastFeedingTime.setDate(lastFeedingTime.getDate() - 1);
+      }
+      
+      console.log('lastFeedingTime:', lastFeedingTime);
+      console.log('now:', now);
+      
       const diffMs = now - lastFeedingTime;
       console.log('diffMs:', diffMs);
       
