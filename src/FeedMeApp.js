@@ -155,10 +155,35 @@ const FeedMeApp = () => {
 
   const calculateGapBetweenFeedings = (currentFeeding, previousFeeding) => {
     try {
-      if (!previousFeeding) return null;
+      if (!previousFeeding || !currentFeeding) return null;
       
-      const currentTime = new Date(`${currentFeeding.date}T${currentFeeding.time}`);
-      const previousTime = new Date(`${previousFeeding.date}T${previousFeeding.time}`);
+      // More robust time parsing
+      const parseDateTime = (feeding) => {
+        try {
+          // Handle different time formats
+          let timeStr = feeding.time;
+          if (timeStr.includes(' ')) {
+            // Convert "5:10 PM" format to 24-hour
+            const [time, period] = timeStr.split(' ');
+            const [hour, minute] = time.split(':');
+            let hour24 = parseInt(hour);
+            if (period === 'PM' && hour24 !== 12) hour24 += 12;
+            if (period === 'AM' && hour24 === 12) hour24 = 0;
+            timeStr = `${hour24.toString().padStart(2, '0')}:${minute}:00`;
+          }
+          return new Date(`${feeding.date}T${timeStr}`);
+        } catch (e) {
+          console.error('Error parsing datetime:', e);
+          return null;
+        }
+      };
+      
+      const currentTime = parseDateTime(currentFeeding);
+      const previousTime = parseDateTime(previousFeeding);
+      
+      if (!currentTime || !previousTime || isNaN(currentTime) || isNaN(previousTime)) {
+        return null;
+      }
       
       const diffMs = currentTime - previousTime;
       if (diffMs <= 0) return null;
@@ -166,6 +191,8 @@ const FeedMeApp = () => {
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
       const hours = Math.floor(diffMinutes / 60);
       const minutes = diffMinutes % 60;
+      
+      if (isNaN(hours) || isNaN(minutes)) return null;
       
       if (hours === 0) {
         return `${minutes}m`;
@@ -1038,94 +1065,70 @@ const FeedMeApp = () => {
         {/* Time Selection */}
         <div style={styles.formSection}>
           <div style={styles.formLabel}>
-            <Clock size={20} color="#8b5cf6" />
-            <label>Feeding Time</label>
+            <Clock size={20} color="#007AFF" />
+            <label>Start Time</label>
           </div>
           
-          <div style={styles.timePickerContainer}>
-            <p style={styles.timePickerTitle}>ENTER TIME</p>
-            <div style={styles.timeInputRow}>
-              <div style={styles.timeInputBox}>
-                <p style={styles.timeInputLabel}>Hour</p>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={selectedTime.hour}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    if (value === '') {
-                      setSelectedTime(prev => ({...prev, hour: ''}));
-                    } else {
-                      const hour = parseInt(value);
-                      if (hour <= 12) {
-                        setSelectedTime(prev => ({...prev, hour: hour}));
-                      }
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || parseInt(value) < 1) {
-                      setSelectedTime(prev => ({...prev, hour: 1}));
-                    }
-                  }}
-                  style={styles.timeInputValue}
-                  maxLength="2"
-                  placeholder="12"
-                />
-              </div>
-              <div style={styles.timeColon}>:</div>
-              <div style={styles.timeInputBox}>
-                <p style={styles.timeInputLabel}>Minute</p>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={selectedTime.minute === 0 ? '00' : selectedTime.minute.toString().padStart(2, '0')}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    if (value === '') {
-                      setSelectedTime(prev => ({...prev, minute: 0}));
-                    } else {
-                      const minute = parseInt(value);
-                      if (minute <= 59) {
-                        setSelectedTime(prev => ({...prev, minute: minute}));
-                      }
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    if (value === '') {
-                      setSelectedTime(prev => ({...prev, minute: 0}));
-                    }
-                  }}
-                  style={styles.timeInputValue}
-                  maxLength="2"
-                  placeholder="00"
-                />
-              </div>
-              <div style={styles.periodButtons}>
-                <button
-                  onClick={() => setSelectedTime(prev => ({...prev, period: 'AM'}))}
-                  style={{
-                    ...styles.periodButton,
-                    ...(selectedTime.period === 'AM' ? styles.activePeriodButton : {})
-                  }}
-                >
-                  AM
-                </button>
-                <button
-                  onClick={() => setSelectedTime(prev => ({...prev, period: 'PM'}))}
-                  style={{
-                    ...styles.periodButton,
-                    ...(selectedTime.period === 'PM' ? styles.activePeriodButton : {})
-                  }}
-                >
-                  PM
-                </button>
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={() => {
+              // Create a time input element and trigger it
+              const input = document.createElement('input');
+              input.type = 'time';
+              
+              // Convert 12-hour to 24-hour for input value
+              let hour24 = selectedTime.hour;
+              if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
+                hour24 += 12;
+              }
+              if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
+                hour24 = 0;
+              }
+              
+              input.value = `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
+              input.style.position = 'absolute';
+              input.style.opacity = '0';
+              input.style.pointerEvents = 'none';
+              document.body.appendChild(input);
+              
+              input.onchange = (e) => {
+                const [hour24Str, minuteStr] = e.target.value.split(':');
+                const hour24 = parseInt(hour24Str);
+                const minute = parseInt(minuteStr);
+                
+                let hour12 = hour24;
+                const period = hour24 >= 12 ? 'PM' : 'AM';
+                if (hour24 > 12) hour12 -= 12;
+                if (hour24 === 0) hour12 = 12;
+                
+                setSelectedTime({
+                  hour: hour12,
+                  minute: minute,
+                  period: period
+                });
+                
+                document.body.removeChild(input);
+              };
+              
+              input.click();
+            }}
+            style={{
+              width: '100%',
+              padding: '1rem',
+              backgroundColor: 'white',
+              border: '1px solid #d1d5db',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+              Today, {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+            </span>
+            <span style={{color: '#007AFF', fontSize: '1.1rem'}}>›</span>
+          </button>
         </div>
 
         {/* Ounces Selection */}
