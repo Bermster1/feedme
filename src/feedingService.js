@@ -90,5 +90,43 @@ export const feedingService = {
       console.error('Error fetching feedings by date:', error)
       throw error
     }
+  },
+
+  // Save user settings (like birth date)
+  async saveUserSettings(settings) {
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .upsert([{
+          id: 1, // Single user app, so we just use ID 1
+          baby_birth_date: settings.babyBirthDate,
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error saving user settings:', error)
+      throw error
+    }
+  },
+
+  // Load user settings
+  async getUserSettings() {
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('id', 1)
+        .single()
+      
+      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
+      return data || null
+    } catch (error) {
+      console.error('Error loading user settings:', error)
+      throw error
+    }
   }
 }

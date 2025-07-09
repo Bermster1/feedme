@@ -96,9 +96,9 @@ const AddFeedingScreen = React.memo(({
                   tomorrow.setDate(today.getDate() + 1);
                   
                   const dateStr = selectedDate;
-                  const todayStr = today.toISOString().split('T')[0];
-                  const yesterdayStr = yesterday.toISOString().split('T')[0];
-                  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                  const todayStr = getLocalDateString(today);
+                  const yesterdayStr = getLocalDateString(yesterday);
+                  const tomorrowStr = getLocalDateString(tomorrow);
                   
                   if (dateStr === todayStr) {
                     return `Today, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
@@ -302,6 +302,14 @@ const AddFeedingScreen = React.memo(({
 ));
 
 const FeedMeApp = () => {
+  // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
     const now = new Date();
@@ -312,7 +320,7 @@ const FeedMeApp = () => {
     return { hour, minute, period };
   });
   const [selectedDate, setSelectedDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]; // Always default to current calendar date
+    return getLocalDateString(); // Use local date instead of UTC
   });
   const [selectedOunces, setSelectedOunces] = useState(null);
   const [customOunces, setCustomOunces] = useState('');
@@ -328,20 +336,49 @@ const FeedMeApp = () => {
   const [activeTab, setActiveTab] = useState('home');
   
   // Settings state
-  const [babyBirthDate, setBabyBirthDate] = useState(() => {
-    const saved = localStorage.getItem('babyBirthDate');
-    return saved || null;
-  });
+  const [babyBirthDate, setBabyBirthDate] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   
   // Calculate baby's age in weeks from birth date
   const babyAgeWeeks = babyBirthDate ? 
     Math.floor((Date.now() - new Date(babyBirthDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
 
-  // Load feedings from Supabase on component mount
+  // Load feedings and settings from Supabase on component mount
   useEffect(() => {
-    loadFeedings();
+    loadDataAndSettings();
   }, []);
+
+  const loadDataAndSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Load feedings and settings in parallel
+      const [feedings, userSettings] = await Promise.all([
+        feedingService.getAllFeedings(),
+        feedingService.getUserSettings()
+      ]);
+      
+      setAllFeedings(feedings);
+      
+      // Set birth date from database, fallback to localStorage, then null
+      if (userSettings?.baby_birth_date) {
+        setBabyBirthDate(userSettings.baby_birth_date);
+      } else {
+        const localBirthDate = localStorage.getItem('babyBirthDate');
+        if (localBirthDate) {
+          setBabyBirthDate(localBirthDate);
+          // Migrate from localStorage to database
+          await feedingService.saveUserSettings({ babyBirthDate: localBirthDate });
+        }
+      }
+    } catch (err) {
+      setError('Failed to load data');
+      console.error('Error loading data and settings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadFeedings = async () => {
     try {
@@ -357,10 +394,20 @@ const FeedMeApp = () => {
     }
   };
 
-  const saveSettings = (birthDate) => {
-    setBabyBirthDate(birthDate);
-    localStorage.setItem('babyBirthDate', birthDate);
-    setShowSettings(false);
+  const saveSettings = async (birthDate) => {
+    try {
+      setBabyBirthDate(birthDate);
+      localStorage.setItem('babyBirthDate', birthDate);
+      
+      // Save to database
+      await feedingService.saveUserSettings({ babyBirthDate: birthDate });
+      
+      setShowSettings(false);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      // Still close the modal even if database save fails
+      setShowSettings(false);
+    }
   };
 
   // Get feeding day (7am to 7am cycle)
@@ -375,7 +422,7 @@ const FeedMeApp = () => {
 
   // Get current calendar date for new feedings
   const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+    return getLocalDateString();
   };
   
   // Get feeding day date for a given calendar date (used for display grouping)
@@ -488,19 +535,25 @@ const FeedMeApp = () => {
       
       // Get the most recent feeding from all feedings (sorted by date desc, then time desc)
       const mostRecentFeeding = allFeedings[0];
+      console.log('Most recent feeding:', mostRecentFeeding);
       
       // Parse the most recent feeding's date and time
       const feedingDateTime = parseFeedingDateTime(mostRecentFeeding);
+      console.log('Parsed feeding date/time:', feedingDateTime);
       
       if (!feedingDateTime) {
+        console.log('Failed to parse feeding date/time');
         return "Recently";
       }
       
       const now = new Date();
+      console.log('Current time:', now);
       const diffMs = now - feedingDateTime;
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      console.log('Diff in minutes:', diffMinutes);
       
       if (diffMinutes < 0) {
+        console.log('Negative time difference - feeding in future');
         return "Recently"; // Future time, shouldn't happen but handle gracefully
       }
       
@@ -567,36 +620,47 @@ const FeedMeApp = () => {
 
   // Helper function to format date for display using custom 7AM-7AM day cycle
   const formatDate = (customDayDate) => {
+    console.log('formatDate called with customDayDate:', customDayDate);
+    
     // Fix timezone issue by parsing date components manually
     const [year, month, day] = customDayDate.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    console.log('Parsed date object:', date);
     
     // Determine current custom day (7AM-7AM cycle)
     const now = new Date();
     const currentHour = now.getHours();
+    console.log('Current time:', now, 'Current hour:', currentHour);
+    
     let currentCustomDay;
     
     if (currentHour < 7) {
       // Before 7AM - current custom day started yesterday
       const yesterday = new Date(now);
       yesterday.setDate(now.getDate() - 1);
-      currentCustomDay = yesterday.toISOString().split('T')[0];
+      currentCustomDay = getLocalDateString(yesterday);
+      console.log('Before 7AM - currentCustomDay set to yesterday:', currentCustomDay);
     } else {
       // 7AM or later - current custom day is today
-      currentCustomDay = now.toISOString().split('T')[0];
+      currentCustomDay = getLocalDateString(now);
+      console.log('7AM or later - currentCustomDay set to today:', currentCustomDay);
     }
     
     
     // Calculate previous custom day
     const prevCustomDayDate = new Date(currentCustomDay + 'T00:00:00');
     prevCustomDayDate.setDate(prevCustomDayDate.getDate() - 1);
-    const previousCustomDay = prevCustomDayDate.toISOString().split('T')[0];
+    const previousCustomDay = getLocalDateString(prevCustomDayDate);
+    console.log('Previous custom day:', previousCustomDay);
     
     if (customDayDate === currentCustomDay) {
+      console.log('Showing as Today');
       return `Today • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
     } else if (customDayDate === previousCustomDay) {
+      console.log('Showing as Yesterday');
       return `Yesterday • ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
     } else {
+      console.log('Showing as regular date');
       return date.toLocaleDateString('en-US', { 
         weekday: 'long', 
         month: 'long', 
@@ -1022,7 +1086,7 @@ const FeedMeApp = () => {
         setSelectedTime({ hour: currentHour, minute: currentMinute, period });
         
         // Reset date to current calendar date
-        setSelectedDate(now.toISOString().split('T')[0]);
+        setSelectedDate(getLocalDateString(now));
         
         setSelectedOunces(null);
         setCustomOunces('');
@@ -1047,7 +1111,7 @@ const FeedMeApp = () => {
     setSelectedTime({ hour, minute, period });
     
     // Reset date to current calendar date
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString());
     
     setSelectedOunces(null);
     setCustomOunces('');
