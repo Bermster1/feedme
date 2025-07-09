@@ -1,0 +1,13 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple green square with rounded corners -->
+  <rect width="180" height="180" rx="40" ry="40" fill="#00704a"/>
+  
+  <!-- White circle -->
+  <circle cx="90" cy="90" r="54" fill="white"/>
+  
+  <!-- Green dot in center -->
+  <circle cx="90" cy="90" r="18" fill="#00704a"/>
+  
+  <!-- Text "FM" for Feed Me -->
+  <text x="90" y="104.4" text-anchor="middle" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#00704a">FM</text>
+</svg>

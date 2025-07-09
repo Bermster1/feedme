@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green circle background -->
+  <circle cx="256" cy="256" r="256" fill="#00704a"/>
+  
+  <!-- White circle for contrast -->
+  <circle cx="256" cy="256" r="200" fill="white"/>
+  
+  <!-- Green inner circle -->
+  <circle cx="256" cy="256" r="180" fill="#e8f5e8"/>
+  
+  <!-- Baby icon (scaled up and centered) -->
+  <g transform="translate(256, 256) scale(8, 8) translate(-12, -12)">
+    <path d="M9 12c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3-3 1.34-3 3zm0 0" fill="#00704a"/>
+    <path d="M12 2C10.9 2 10 2.9 10 4v1.5c0 .83.67 1.5 1.5 1.5h1c.83 0 1.5-.67 1.5-1.5V4c0-1.1-.9-2-2-2z" fill="#00704a"/>
+    <path d="M7 8.5c0-.83.67-1.5 1.5-1.5h7c.83 0 1.5.67 1.5 1.5S16.33 10 15.5 10h-7C7.67 10 7 9.33 7 8.5z" fill="#00704a"/>
+    <path d="M12 16c-3.87 0-7-3.13-7-7h2c0 2.76 2.24 5 5 5s5-2.24 5-5h2c0 3.87-3.13 7-7 7z" fill="#00704a"/>
+  </g>
+</svg>
