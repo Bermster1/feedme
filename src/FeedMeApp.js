@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings } from 'lucide-react';
 import { feedingService } from './feedingService';
+
+// Helper function to get user's local date in YYYY-MM-DD format (not UTC)
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 // AddFeedingScreen component extracted outside to prevent recreation
 const AddFeedingScreen = React.memo(({ 
@@ -20,7 +28,8 @@ const AddFeedingScreen = React.memo(({
   handleUpdateFeeding,
   loading,
   styles,
-  presetOunces 
+  presetOunces,
+  getLocalDateString
 }) => (
   <div>
     {/* Header */}
@@ -88,7 +97,10 @@ const AddFeedingScreen = React.memo(({
             >
               <span style={{color: '#007AFF', fontSize: '1rem', lineHeight: '1.2'}}>
                 {(() => {
-                  const date = new Date(selectedDate + 'T00:00:00');
+                  // Parse the selectedDate manually to avoid timezone issues
+                  const [year, month, day] = selectedDate.split('-');
+                  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                  
                   const today = new Date();
                   const yesterday = new Date(today);
                   yesterday.setDate(today.getDate() - 1);
@@ -302,13 +314,6 @@ const AddFeedingScreen = React.memo(({
 ));
 
 const FeedMeApp = () => {
-  // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
-  const getLocalDateString = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -410,44 +415,10 @@ const FeedMeApp = () => {
     }
   };
 
-  // Get feeding day (7am to 7am cycle)
-  const getFeedingDay = (date = new Date()) => {
-    const feedingDate = new Date(date);
-    // If it's before 7am, consider it part of previous day's feeding cycle
-    if (feedingDate.getHours() < 7) {
-      feedingDate.setDate(feedingDate.getDate() - 1);
-    }
-    return feedingDate.toISOString().split('T')[0];
-  };
 
   // Get current calendar date for new feedings
   const getTodayDate = () => {
     return getLocalDateString();
-  };
-  
-  // Get feeding day date for a given calendar date (used for display grouping)
-  const getFeedingDayForDate = (calendarDate, time) => {
-    const [year, month, day] = calendarDate.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    
-    // Parse time to get hour
-    let hour;
-    if (time && time.includes(' ')) {
-      const [timeStr, period] = time.split(' ');
-      const [hourStr] = timeStr.split(':');
-      hour = parseInt(hourStr);
-      if (period === 'PM' && hour !== 12) hour += 12;
-      if (period === 'AM' && hour === 12) hour = 0;
-    } else {
-      hour = 12; // Default assumption
-    }
-    
-    // If before 7am, the feeding day is the previous calendar day
-    if (hour < 7) {
-      date.setDate(date.getDate() - 1);
-    }
-    
-    return date.toISOString().split('T')[0];
   };
 
   // Helper function to parse feeding date/time without timezone issues
@@ -2071,6 +2042,7 @@ const FeedMeApp = () => {
           loading={loading}
           styles={styles}
           presetOunces={presetOunces}
+          getLocalDateString={getLocalDateString}
         />
       ) : (
         <>
