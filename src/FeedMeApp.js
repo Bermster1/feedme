@@ -405,11 +405,14 @@ const FeedMeApp = () => {
       localStorage.setItem('babyBirthDate', birthDate);
       
       // Save to database
-      await feedingService.saveUserSettings({ babyBirthDate: birthDate });
+      console.log('Attempting to save birth date to database:', birthDate);
+      const result = await feedingService.saveUserSettings({ babyBirthDate: birthDate });
+      console.log('Database save result:', result);
       
       setShowSettings(false);
     } catch (err) {
       console.error('Error saving settings:', err);
+      console.error('Error details:', err.message, err.details);
       // Still close the modal even if database save fails
       setShowSettings(false);
     }

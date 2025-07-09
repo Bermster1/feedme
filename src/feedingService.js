@@ -95,18 +95,61 @@ export const feedingService = {
   // Save user settings (like birth date)
   async saveUserSettings(settings) {
     try {
-      const { data, error } = await supabase
+      console.log('Saving settings to database:', settings);
+      
+      // First check if a record exists
+      const { data: existingData, error: selectError } = await supabase
         .from('user_settings')
-        .upsert([{
-          id: 1, // Single user app, so we just use ID 1
-          baby_birth_date: settings.babyBirthDate,
-          updated_at: new Date().toISOString()
-        }])
-        .select()
+        .select('*')
+        .eq('id', 1)
         .single()
       
-      if (error) throw error
-      return data
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error('Error checking existing settings:', selectError);
+        throw selectError;
+      }
+      
+      let result;
+      if (existingData) {
+        // Update existing record
+        console.log('Updating existing settings record');
+        const { data, error } = await supabase
+          .from('user_settings')
+          .update({
+            baby_birth_date: settings.babyBirthDate,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', 1)
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
+        result = data;
+      } else {
+        // Insert new record
+        console.log('Inserting new settings record');
+        const { data, error } = await supabase
+          .from('user_settings')
+          .insert([{
+            id: 1,
+            baby_birth_date: settings.babyBirthDate,
+            updated_at: new Date().toISOString()
+          }])
+          .select()
+          .single()
+        
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        result = data;
+      }
+      
+      console.log('Successfully saved settings:', result);
+      return result
     } catch (error) {
       console.error('Error saving user settings:', error)
       throw error
