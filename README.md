@@ -1,6 +1,6 @@
 ## HI BEB
 
-Nice app
+Nice feeding tracker app
 
 # Getting Started with Create React App
 
