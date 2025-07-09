@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Feed Me",
+  "name": "Feed Me - Baby Feeding Tracker",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +8,22 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo512.png",
+      "src": "icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#00704a",
+  "background_color": "#f7f7f7",
+  "categories": ["health", "lifestyle"],
+  "description": "Track your baby's feeding schedule with ease"
 }
