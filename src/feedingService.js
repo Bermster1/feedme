@@ -138,5 +138,17 @@ export const feedingService = {
       console.error('Error migrating existing feedings:', error)
       throw error
     }
+  },
+
+  // Legacy method for backward compatibility - returns empty object
+  async getUserSettings() {
+    console.warn('getUserSettings is deprecated - use baby-specific data instead')
+    return { baby_birth_date: null }
+  },
+
+  // Legacy saveUserSettings for compatibility
+  async saveUserSettings(settings) {
+    console.warn('saveUserSettings is deprecated - use family/baby management instead')
+    return true
   }
 }

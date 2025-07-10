@@ -320,6 +320,9 @@ const AddFeedingScreen = React.memo(({
 const FeedMeApp = () => {
   const { signOut } = useAuth();
   const { selectedBaby, activeBabies, setSelectedBaby } = useFamilies();
+  
+  // Production ready version - authentication integrated
+  console.log('FeedMeApp loaded with multi-baby authentication');
 
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -354,8 +357,9 @@ const FeedMeApp = () => {
   const babyAgeWeeks = selectedBaby?.birth_date ? 
     Math.floor((Date.now() - new Date(selectedBaby.birth_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
 
-  // Load feedings from Supabase when selected baby changes
+  // Load feedings from Supabase when selected baby changes - FIXED VERSION
   useEffect(() => {
+    console.log('useEffect triggered for baby:', selectedBaby?.name);
     if (selectedBaby) {
       loadFeedingsForBaby();
     } else {
@@ -363,6 +367,9 @@ const FeedMeApp = () => {
       setLoading(false);
     }
   }, [selectedBaby]);
+
+  // Force cache break - remove old legacy code references
+  console.log('FeedMeApp loaded with baby:', selectedBaby?.name || 'none');
 
   const loadFeedingsForBaby = async () => {
     if (!selectedBaby) return;

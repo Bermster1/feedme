@@ -9,7 +9,22 @@ import './App.css';
 
 const AppContent = () => {
   const { user, loading, signInWithMagicLink, recoverAccount, isAuthenticated } = useAuth();
-  const { needsSetup, createFirstFamilyAndBaby, loading: familiesLoading, error: familiesError } = useFamilies();
+  const { needsSetup, createFirstFamilyAndBaby, loading: familiesLoading, error: familiesError, selectedBaby, families, babies } = useFamilies();
+
+  // Production version with authentication
+  console.log('Feed Me App - Authentication System Active');
+  
+  // Debug logging
+  console.log('App state:', { 
+    isAuthenticated, 
+    needsSetup, 
+    familiesLoading, 
+    familiesError, 
+    selectedBaby,
+    families: families?.length,
+    babies: babies?.length,
+    user: user?.email 
+  });
 
   if (loading || familiesLoading) {
     return (
