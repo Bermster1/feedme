@@ -1,7 +1,25 @@
 import { supabase } from './supabaseClient'
 
 export const feedingService = {
-  // Get all feedings, ordered by date and created_at descending
+  // Get all feedings for a specific baby
+  async getBabyFeedings(babyId) {
+    try {
+      const { data, error } = await supabase
+        .from('feedings')
+        .select('*')
+        .eq('baby_id', babyId)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching baby feedings:', error)
+      throw error
+    }
+  },
+
+  // Get all feedings (legacy method for migration)
   async getAllFeedings() {
     try {
       const { data, error } = await supabase
@@ -21,9 +39,14 @@ export const feedingService = {
   // Add a new feeding
   async addFeeding(feeding) {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
       const { data, error } = await supabase
         .from('feedings')
         .insert([{
+          baby_id: feeding.babyId,
+          user_id: user.id,
           date: feeding.date,
           time: feeding.time,
           ounces: feeding.ounces,
@@ -75,12 +98,13 @@ export const feedingService = {
     }
   },
 
-  // Get feedings for a specific date
-  async getFeedingsByDate(date) {
+  // Get feedings for a specific date and baby
+  async getFeedingsByDate(babyId, date) {
     try {
       const { data, error } = await supabase
         .from('feedings')
         .select('*')
+        .eq('baby_id', babyId)
         .eq('date', date)
         .order('created_at', { ascending: false })
       
@@ -92,83 +116,26 @@ export const feedingService = {
     }
   },
 
-  // Save user settings (like birth date)
-  async saveUserSettings(settings) {
+  // Migration helper: Move existing feedings to a default baby
+  async migrateExistingFeedings(babyId) {
     try {
-      console.log('Saving settings to database:', settings);
-      
-      // First check if a record exists
-      const { data: existingData, error: selectError } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('id', 1)
-        .single()
-      
-      if (selectError && selectError.code !== 'PGRST116') {
-        console.error('Error checking existing settings:', selectError);
-        throw selectError;
-      }
-      
-      let result;
-      if (existingData) {
-        // Update existing record
-        console.log('Updating existing settings record');
-        const { data, error } = await supabase
-          .from('user_settings')
-          .update({
-            baby_birth_date: settings.babyBirthDate,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', 1)
-          .select()
-          .single()
-        
-        if (error) {
-          console.error('Update error:', error);
-          throw error;
-        }
-        result = data;
-      } else {
-        // Insert new record
-        console.log('Inserting new settings record');
-        const { data, error } = await supabase
-          .from('user_settings')
-          .insert([{
-            id: 1,
-            baby_birth_date: settings.babyBirthDate,
-            updated_at: new Date().toISOString()
-          }])
-          .select()
-          .single()
-        
-        if (error) {
-          console.error('Insert error:', error);
-          throw error;
-        }
-        result = data;
-      }
-      
-      console.log('Successfully saved settings:', result);
-      return result
-    } catch (error) {
-      console.error('Error saving user settings:', error)
-      throw error
-    }
-  },
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
 
-  // Load user settings
-  async getUserSettings() {
-    try {
+      // Update all feedings without baby_id to use the new baby
       const { data, error } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('id', 1)
-        .single()
-      
-      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
-      return data || null
+        .from('feedings')
+        .update({ 
+          baby_id: babyId,
+          user_id: user.id
+        })
+        .is('baby_id', null)
+        .select()
+
+      if (error) throw error
+      return data || []
     } catch (error) {
-      console.error('Error loading user settings:', error)
+      console.error('Error migrating existing feedings:', error)
       throw error
     }
   }
