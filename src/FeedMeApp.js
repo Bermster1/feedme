@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings } from 'lucide-react';
+import { Plus, Baby, Clock, Droplets, X, Check, Edit3, Trash2, Moon, Settings, Bed, ChevronDown } from 'lucide-react';
 import { feedingService } from './feedingService';
+import { sleepService } from './sleepService';
+import { diaperService } from './diaperService';
+import { useFamilies } from './useFamilies';
+import { useAuth } from './AuthContext';
 
 // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = (date = new Date()) => {
@@ -314,6 +318,8 @@ const AddFeedingScreen = React.memo(({
 ));
 
 const FeedMeApp = () => {
+  const { signOut } = useAuth();
+  const { selectedBaby, activeBabies, setSelectedBaby } = useFamilies();
 
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -341,55 +347,31 @@ const FeedMeApp = () => {
   const [activeTab, setActiveTab] = useState('home');
   
   // Settings state
-  const [babyBirthDate, setBabyBirthDate] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showBabySelector, setShowBabySelector] = useState(false);
   
   // Calculate baby's age in weeks from birth date
-  const babyAgeWeeks = babyBirthDate ? 
-    Math.floor((Date.now() - new Date(babyBirthDate + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
+  const babyAgeWeeks = selectedBaby?.birth_date ? 
+    Math.floor((Date.now() - new Date(selectedBaby.birth_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
 
-  // Load feedings and settings from Supabase on component mount
+  // Load feedings from Supabase when selected baby changes
   useEffect(() => {
-    loadDataAndSettings();
-  }, []);
-
-  const loadDataAndSettings = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Load feedings and settings in parallel
-      const [feedings, userSettings] = await Promise.all([
-        feedingService.getAllFeedings(),
-        feedingService.getUserSettings()
-      ]);
-      
-      setAllFeedings(feedings);
-      
-      // Set birth date from database, fallback to localStorage, then null
-      if (userSettings?.baby_birth_date) {
-        setBabyBirthDate(userSettings.baby_birth_date);
-      } else {
-        const localBirthDate = localStorage.getItem('babyBirthDate');
-        if (localBirthDate) {
-          setBabyBirthDate(localBirthDate);
-          // Migrate from localStorage to database
-          await feedingService.saveUserSettings({ babyBirthDate: localBirthDate });
-        }
-      }
-    } catch (err) {
-      setError('Failed to load data');
-      console.error('Error loading data and settings:', err);
-    } finally {
+    if (selectedBaby) {
+      loadFeedingsForBaby();
+    } else {
+      setAllFeedings([]);
       setLoading(false);
     }
-  };
+  }, [selectedBaby]);
 
-  const loadFeedings = async () => {
+  const loadFeedingsForBaby = async () => {
+    if (!selectedBaby) return;
+    
     try {
       setLoading(true);
       setError(null);
-      const feedings = await feedingService.getAllFeedings();
+      
+      const feedings = await feedingService.getBabyFeedings(selectedBaby.id);
       setAllFeedings(feedings);
     } catch (err) {
       setError('Failed to load feedings');
@@ -399,24 +381,22 @@ const FeedMeApp = () => {
     }
   };
 
-  const saveSettings = async (birthDate) => {
+  const loadFeedings = async () => {
+    if (!selectedBaby) return;
+    
     try {
-      setBabyBirthDate(birthDate);
-      localStorage.setItem('babyBirthDate', birthDate);
-      
-      // Save to database
-      console.log('Attempting to save birth date to database:', birthDate);
-      const result = await feedingService.saveUserSettings({ babyBirthDate: birthDate });
-      console.log('Database save result:', result);
-      
-      setShowSettings(false);
+      setLoading(true);
+      setError(null);
+      const feedings = await feedingService.getBabyFeedings(selectedBaby.id);
+      setAllFeedings(feedings);
     } catch (err) {
-      console.error('Error saving settings:', err);
-      console.error('Error details:', err.message, err.details);
-      // Still close the modal even if database save fails
-      setShowSettings(false);
+      setError('Failed to load feedings');
+      console.error('Error loading feedings:', err);
+    } finally {
+      setLoading(false);
     }
   };
+
 
 
   // Get current calendar date for new feedings
@@ -1014,6 +994,8 @@ const FeedMeApp = () => {
 
 
   const handleSaveFeeding = async () => {
+    if (!selectedBaby) return;
+    
     const ounces = selectedOunces || parseFloat(customOunces) || 0;
     if (ounces > 0) {
       try {
@@ -1032,15 +1014,14 @@ const FeedMeApp = () => {
           );
         }
         
-        const newFeeding = {
+        const savedFeeding = await feedingService.addFeeding({
+          babyId: selectedBaby.id,
           date: selectedDate,
           time: timeString,
           ounces: ounces,
           notes: notes || null,
           gap: gap
-        };
-        
-        const savedFeeding = await feedingService.addFeeding(newFeeding);
+        });
         
         // Insert feeding in chronological order by actual feeding time
         const newFeedingsList = [...allFeedings, savedFeeding].sort((a, b) => {
@@ -1530,14 +1511,77 @@ const FeedMeApp = () => {
     }
   };
 
-  // Header Component with Starbucks-style tabs
+  // Header Component with baby selector
   const Header = () => (
     <div style={styles.header}>
       <div style={styles.headerTop}>
         <div style={styles.headerIcon}>
           <Baby size={24} />
         </div>
-        <h1 style={styles.headerTitle}>Feed Me</h1>
+        
+        {/* Baby Selector */}
+        <div style={{flex: 1, textAlign: 'center'}}>
+          {selectedBaby ? (
+            <button
+              onClick={() => setShowBabySelector(!showBabySelector)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '1.25rem',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                margin: '0 auto'
+              }}
+            >
+              {selectedBaby.name}
+              <ChevronDown size={20} />
+            </button>
+          ) : (
+            <h1 style={styles.headerTitle}>Feed Me</h1>
+          )}
+          
+          {/* Baby Selector Dropdown */}
+          {showBabySelector && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: '1rem',
+              right: '1rem',
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 10,
+              marginTop: '0.5rem'
+            }}>
+              {activeBabies.map(baby => (
+                <button
+                  key={baby.id}
+                  onClick={() => {
+                    setSelectedBaby(baby);
+                    setShowBabySelector(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    textAlign: 'left',
+                    border: 'none',
+                    backgroundColor: selectedBaby?.id === baby.id ? '#f3f4f6' : 'white',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
+                  {baby.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
         <button 
           onClick={() => setShowSettings(true)}
           style={{
@@ -1551,6 +1595,59 @@ const FeedMeApp = () => {
           <Settings size={24} />
         </button>
       </div>
+      
+      {/* Action Buttons */}
+      {selectedBaby && (
+        <div style={{
+          display: 'flex',
+          gap: '0.75rem',
+          padding: '0 0 1rem 0'
+        }}>
+          <button 
+            onClick={() => setCurrentScreen('addFeeding')}
+            style={{
+              flex: 1,
+              backgroundColor: '#00704a',
+              color: 'white',
+              fontWeight: '600',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            <Plus size={18} />
+            Add Feeding
+          </button>
+          <button 
+            onClick={() => setCurrentScreen('addSleep')}
+            style={{
+              flex: 1,
+              backgroundColor: '#6366f1',
+              color: 'white',
+              fontWeight: '600',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            <Bed size={18} />
+            Add Sleep
+          </button>
+        </div>
+      )}
+      
       <div style={styles.tabContainer}>
         <button
           onClick={() => setActiveTab('home')}
@@ -1559,7 +1656,7 @@ const FeedMeApp = () => {
             ...(activeTab === 'home' ? styles.activeTab : styles.inactiveTab)
           }}
         >
-          My Feedings
+          Timeline
         </button>
         <button
           onClick={() => setActiveTab('totals')}
@@ -1575,41 +1672,44 @@ const FeedMeApp = () => {
   );
 
 
-  // Home Screen with Starbucks-style design
-  const HomeScreen = () => (
-    <div>
-      <Header />
-      
-      {/* Balance Card */}
-      <div style={styles.balanceCard}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-          <div>
-            <p style={styles.balanceTitle}>Total Today:</p>
-            <div style={styles.balanceAmount}>
-              {totalOunces}
-              <span style={styles.balanceUnit}>oz</span>
-              <Droplets size={32} color="#d4a574" />
-            </div>
-          </div>
-          <div style={{textAlign: 'right'}}>
-            <p style={styles.balanceTitle}>Last Feeding:</p>
-            <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937', margin: 0}}>
-              {timeSinceLastFeeding}
-            </p>
+  // Home Screen with timeline design
+  const HomeScreen = () => {
+    if (!selectedBaby) {
+      return (
+        <div>
+          <Header />
+          <div style={{textAlign: 'center', padding: '2rem'}}>
+            <Baby size={48} style={{margin: '0 auto 1rem auto', color: '#d1d5db'}} />
+            <p style={{color: '#6b7280', marginBottom: '0.5rem'}}>No baby selected</p>
+            <p style={{color: '#9ca3af', fontSize: '0.875rem'}}>Please select a baby from the header</p>
           </div>
         </div>
-      </div>
+      );
+    }
 
-      {/* Add Feeding Button */}
-      <div style={styles.addFeedingContainer}>
-        <button 
-          onClick={() => setCurrentScreen('addFeeding')}
-          style={styles.addFeedingBtn}
-        >
-          <Plus size={24} />
-          <span>Add Feeding</span>
-        </button>
-      </div>
+    return (
+      <div>
+        <Header />
+        
+        {/* Balance Card */}
+        <div style={styles.balanceCard}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <div>
+              <p style={styles.balanceTitle}>Total Today:</p>
+              <div style={styles.balanceAmount}>
+                {totalOunces}
+                <span style={styles.balanceUnit}>oz</span>
+                <Droplets size={32} color="#d4a574" />
+              </div>
+            </div>
+            <div style={{textAlign: 'right'}}>
+              <p style={styles.balanceTitle}>Last Feeding:</p>
+              <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937', margin: 0}}>
+                {timeSinceLastFeeding}
+              </p>
+            </div>
+          </div>
+        </div>
 
       {/* Error Message */}
       {error && (
@@ -1762,10 +1862,24 @@ const FeedMeApp = () => {
       </div>
     </div>
   );
+  };
 
 
   // Totals Screen with new table layout
   const TotalsScreen = () => {
+    if (!selectedBaby) {
+      return (
+        <div>
+          <Header />
+          <div style={{textAlign: 'center', padding: '2rem'}}>
+            <Baby size={48} style={{margin: '0 auto 1rem auto', color: '#d1d5db'}} />
+            <p style={{color: '#6b7280', marginBottom: '0.5rem'}}>No baby selected</p>
+            <p style={{color: '#9ca3af', fontSize: '0.875rem'}}>Please select a baby from the header</p>
+          </div>
+        </div>
+      );
+    }
+
     const stats = calculateStats();
 
     if (!stats) {
@@ -1784,21 +1898,8 @@ const FeedMeApp = () => {
         <div>
           <Header />
           <div style={{padding: '2rem', textAlign: 'center'}}>
-            <p style={{color: '#6b7280', marginBottom: '1rem'}}>Please set your baby's age in settings</p>
-            <button 
-              onClick={() => setShowSettings(true)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#00704a',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              Open Settings
-            </button>
+            <p style={{color: '#6b7280', marginBottom: '1rem'}}>Baby age calculation unavailable</p>
+            <p style={{color: '#9ca3af', fontSize: '0.875rem'}}>Birth date: {selectedBaby.birth_date}</p>
           </div>
         </div>
       );
@@ -1939,10 +2040,8 @@ const FeedMeApp = () => {
     );
   };
 
-  // Settings Screen
+  // Settings Screen with family management
   const SettingsScreen = () => {
-    const [tempBirthDate, setTempBirthDate] = useState(babyBirthDate || '');
-
     return (
       <div style={styles.modal}>
         <div style={{
@@ -1962,32 +2061,56 @@ const FeedMeApp = () => {
             </button>
           </div>
 
+          {/* Current Baby Info */}
+          {selectedBaby && (
+            <div style={{marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px'}}>
+              <h4 style={{margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600'}}>Current Baby</h4>
+              <p style={{margin: '0.25rem 0', color: '#374151'}}>Name: {selectedBaby.name}</p>
+              <p style={{margin: '0.25rem 0', color: '#374151'}}>
+                Born: {new Date(selectedBaby.birth_date).toLocaleDateString()}
+              </p>
+              <p style={{margin: '0.25rem 0', color: '#374151'}}>
+                Age: {babyAgeWeeks} weeks old
+              </p>
+            </div>
+          )}
+
+          {/* Family Management */}
           <div style={{marginBottom: '1.5rem'}}>
-            <label style={{display: 'block', fontSize: '1rem', fontWeight: '500', marginBottom: '0.5rem', color: '#1f2937'}}>
-              When was your baby born?
-            </label>
-            <input
-              type="date"
-              value={tempBirthDate}
-              onChange={(e) => setTempBirthDate(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '1rem'
-              }}
-            />
-            <p style={{fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem'}}>
-              We'll automatically calculate your baby's age in weeks for feeding progression tracking.
+            <h4 style={{margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '600'}}>Family & Babies</h4>
+            <p style={{fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem'}}>
+              Manage your family members and babies from the main family management page.
             </p>
           </div>
 
-          <div style={{display: 'flex', gap: '0.75rem'}}>
+          {/* Account Actions */}
+          <div style={{borderTop: '1px solid #e5e7eb', paddingTop: '1rem'}}>
+            <button
+              onClick={async () => {
+                if (window.confirm('Are you sure you want to sign out?')) {
+                  await signOut();
+                  setShowSettings(false);
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                marginBottom: '0.75rem'
+              }}
+            >
+              Sign Out
+            </button>
+            
             <button
               onClick={() => setShowSettings(false)}
               style={{
-                flex: 1,
+                width: '100%',
                 padding: '0.75rem',
                 backgroundColor: '#f3f4f6',
                 color: '#374151',
@@ -1997,23 +2120,7 @@ const FeedMeApp = () => {
                 cursor: 'pointer'
               }}
             >
-              Cancel
-            </button>
-            <button
-              onClick={() => saveSettings(tempBirthDate)}
-              disabled={!tempBirthDate}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                backgroundColor: tempBirthDate ? '#00704a' : '#d1d5db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '500',
-                cursor: tempBirthDate ? 'pointer' : 'not-allowed'
-              }}
-            >
-              Save
+              Close
             </button>
           </div>
         </div>
@@ -2023,7 +2130,15 @@ const FeedMeApp = () => {
 
   // Main App Render
   return (
-    <div style={styles.app}>
+    <div 
+      style={styles.app}
+      onClick={(e) => {
+        // Close baby selector when clicking outside
+        if (showBabySelector) {
+          setShowBabySelector(false);
+        }
+      }}
+    >
       {showSettings && <SettingsScreen />}
       {currentScreen === 'addFeeding' ? (
         <AddFeedingScreen 
@@ -2047,6 +2162,25 @@ const FeedMeApp = () => {
           presetOunces={presetOunces}
           getLocalDateString={getLocalDateString}
         />
+      ) : currentScreen === 'addSleep' ? (
+        <div style={{padding: '2rem', textAlign: 'center'}}>
+          <h2>Sleep Tracking</h2>
+          <p style={{color: '#6b7280', marginBottom: '1rem'}}>Sleep tracking coming soon!</p>
+          <button 
+            onClick={() => setCurrentScreen('home')}
+            style={{
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            Back to Timeline
+          </button>
+        </div>
       ) : (
         <>
           {activeTab === 'home' && <HomeScreen />}
