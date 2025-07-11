@@ -15,7 +15,21 @@ const SetupScreen = ({ onSetupComplete }) => {
       await onSetupComplete(babyName.trim(), birthDate)
     } catch (error) {
       console.error('Setup error:', error)
-      alert('Error setting up your account. Please try again.')
+      console.error('Error details:', error.message, error.details)
+      
+      // Show more specific error message
+      let errorMessage = 'Error setting up your account. Please try again.'
+      if (error.message) {
+        if (error.message.includes('permission')) {
+          errorMessage = 'Permission error. Please check your account setup.'
+        } else if (error.message.includes('duplicate')) {
+          errorMessage = 'This baby already exists. Please try a different name.'
+        } else {
+          errorMessage = `Setup error: ${error.message}`
+        }
+      }
+      
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }

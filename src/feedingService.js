@@ -120,7 +120,28 @@ export const feedingService = {
   async migrateExistingFeedings(babyId) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      if (!user) {
+        console.log('No user found for migration - skipping')
+        return []
+      }
+
+      // First check if there are any feedings to migrate
+      const { data: existingFeedings, error: checkError } = await supabase
+        .from('feedings')
+        .select('id')
+        .is('baby_id', null)
+        .limit(1)
+
+      if (checkError) {
+        console.log('Error checking for existing feedings:', checkError)
+        // Don't throw error - just skip migration
+        return []
+      }
+
+      if (!existingFeedings || existingFeedings.length === 0) {
+        console.log('No existing feedings to migrate')
+        return []
+      }
 
       // Update all feedings without baby_id to use the new baby
       const { data, error } = await supabase
@@ -132,11 +153,18 @@ export const feedingService = {
         .is('baby_id', null)
         .select()
 
-      if (error) throw error
+      if (error) {
+        console.log('Migration error (non-fatal):', error)
+        // Don't throw error - migration is optional
+        return []
+      }
+      
+      console.log('Successfully migrated feedings:', data?.length || 0)
       return data || []
     } catch (error) {
-      console.error('Error migrating existing feedings:', error)
-      throw error
+      console.error('Error migrating existing feedings (non-fatal):', error)
+      // Don't throw error - migration failure shouldn't prevent setup
+      return []
     }
   },
 
