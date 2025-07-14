@@ -133,7 +133,7 @@ export const familyService = {
       console.log('User authenticated:', user.id)
 
       // Generate a unique invitation token
-      const inviteToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const inviteToken = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
       console.log('Generated token:', inviteToken)
       
       // Store invitation in localStorage for now (in production, this would be in database)
@@ -147,10 +147,14 @@ export const familyService = {
       
       try {
         // Store in localStorage (temporary solution)
-        const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
-        existingInvites.push(inviteData)
-        localStorage.setItem('family_invitations', JSON.stringify(existingInvites))
-        console.log('Stored invitation in localStorage')
+        if (typeof Storage !== 'undefined' && localStorage) {
+          const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+          existingInvites.push(inviteData)
+          localStorage.setItem('family_invitations', JSON.stringify(existingInvites))
+          console.log('Stored invitation in localStorage')
+        } else {
+          console.warn('localStorage not available')
+        }
       } catch (storageError) {
         console.warn('localStorage not available, proceeding without storage:', storageError)
       }
@@ -178,7 +182,16 @@ export const familyService = {
   async getInvitationData(inviteToken) {
     try {
       // Get invitations from localStorage (in production, this would be from database)
-      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+      let existingInvites = []
+      try {
+        if (typeof Storage !== 'undefined' && localStorage) {
+          existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+        }
+      } catch (storageError) {
+        console.warn('localStorage read error:', storageError)
+        existingInvites = []
+      }
+      
       const invitation = existingInvites.find(inv => inv.token === inviteToken)
       
       if (!invitation) {
@@ -218,9 +231,15 @@ export const familyService = {
       if (memberError) throw memberError
 
       // Mark invitation as used (remove from localStorage)
-      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
-      const updatedInvites = existingInvites.filter(inv => inv.token !== inviteToken)
-      localStorage.setItem('family_invitations', JSON.stringify(updatedInvites))
+      try {
+        if (typeof Storage !== 'undefined' && localStorage) {
+          const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+          const updatedInvites = existingInvites.filter(inv => inv.token !== inviteToken)
+          localStorage.setItem('family_invitations', JSON.stringify(updatedInvites))
+        }
+      } catch (storageError) {
+        console.warn('localStorage cleanup error:', storageError)
+      }
 
       return {
         success: true,

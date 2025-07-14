@@ -2057,9 +2057,11 @@ const FeedMeApp = () => {
   const handleGenerateInviteLink = async () => {
     console.log('handleGenerateInviteLink called');
     console.log('selectedBaby:', selectedBaby);
+    console.log('selectedBaby.family_id:', selectedBaby?.family_id);
+    console.log('familyService:', familyService);
     
     if (!selectedBaby?.family_id) {
-      alert('No family selected. Please select a baby first.');
+      alert(`No family selected. Please select a baby first.\n\nDebug: selectedBaby = ${JSON.stringify(selectedBaby)}`);
       return;
     }
 
@@ -2082,7 +2084,8 @@ const FeedMeApp = () => {
       }
     } catch (error) {
       console.error('Error generating invitation link:', error);
-      alert('Failed to generate invitation link. Please try again.');
+      console.error('Error details:', error.message, error.stack);
+      alert(`Failed to generate invitation link. Please try again.\n\nError: ${error.message}`);
     } finally {
       setInviteLoading(false);
     }
