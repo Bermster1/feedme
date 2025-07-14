@@ -19,10 +19,20 @@ const AppContent = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const inviteParam = urlParams.get('invite');
     if (inviteParam) {
+      console.log('Found invitation token in URL:', inviteParam);
       setInviteToken(inviteParam);
+      // Store in sessionStorage so it persists through magic link redirect
+      sessionStorage.setItem('pendingInvitation', inviteParam);
       // Clean URL after extracting token
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
+    } else {
+      // Check if we have a pending invitation from sessionStorage
+      const pendingInvite = sessionStorage.getItem('pendingInvitation');
+      if (pendingInvite) {
+        console.log('Found pending invitation in sessionStorage:', pendingInvite);
+        setInviteToken(pendingInvite);
+      }
     }
   }, []);
 
@@ -37,6 +47,8 @@ const AppContent = () => {
           const result = await familyService.joinFamilyWithInvitation(inviteToken);
           if (result.success) {
             console.log('Successfully joined family via invitation');
+            // Clear the pending invitation from sessionStorage
+            sessionStorage.removeItem('pendingInvitation');
             // Refresh families to show the new family
             if (loadData) {
               await loadData();
@@ -49,6 +61,8 @@ const AppContent = () => {
         } finally {
           setInviteToken(null);
           setInviteProcessing(false);
+          // Clean up sessionStorage on any completion (success or error)
+          sessionStorage.removeItem('pendingInvitation');
         }
       }
     };

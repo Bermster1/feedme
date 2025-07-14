@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Mail, ArrowRight, Baby, HelpCircle } from 'lucide-react'
 
 const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
+  // Check for pending invitation in sessionStorage as well
+  const pendingInvite = inviteToken || (typeof window !== 'undefined' && sessionStorage.getItem('pendingInvitation'));
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
@@ -191,7 +193,7 @@ const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
         
         {!showRecovery ? (
           <>
-            {inviteToken ? (
+            {pendingInvite ? (
               <div style={{marginBottom: '1.5rem'}}>
                 <div style={{
                   backgroundColor: '#f0f9ff',
