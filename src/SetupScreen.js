@@ -189,7 +189,7 @@ const SetupScreen = ({ onSetupComplete }) => {
         </form>
         
         <div style={styles.note}>
-          💡 <strong>Tip:</strong> You can add more babies and invite family members (like your partner) from the settings page later.
+          💡 <strong>Tip:</strong> You can add more babies and invite family members or caregivers (like your partner) from the settings page later.
         </div>
       </div>
     </div>

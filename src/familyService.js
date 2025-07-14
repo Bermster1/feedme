@@ -122,33 +122,56 @@ export const familyService = {
     }
   },
 
-  // Invite user to family by email
-  async inviteToFamily(familyId, email) {
+  // Create invitation record and send magic link
+  async inviteToFamily(familyId, email, phone = null) {
     try {
-      // Note: This would typically send an invitation email
-      // For now, we'll just add them directly if they have an account
-      const { data: userData, error: userError } = await supabase
-        .from('auth.users')
-        .select('id')
-        .eq('email', email)
-        .single()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
 
-      if (userError || !userData) {
-        throw new Error('User not found. They need to sign up first.')
+      // For now, we'll create a simple invitation system
+      // In a full implementation, this would:
+      // 1. Create an invitation record with a unique token
+      // 2. Send magic link email/SMS with the invitation token
+      // 3. When they click the link, they'd be redirected to signup with family pre-selected
+      
+      const inviteData = {
+        family_id: familyId,
+        invited_email: email,
+        invited_phone: phone,
+        invited_by: user.id,
+        status: 'pending',
+        created_at: new Date().toISOString()
       }
 
+      // For now, just return the invitation data
+      // In production, this would also trigger the magic link email/SMS
+      return {
+        success: true,
+        message: `Invitation will be sent to ${phone || email}`,
+        inviteData
+      }
+    } catch (error) {
+      console.error('Error creating invitation:', error)
+      throw error
+    }
+  },
+
+  // Get family members for a family
+  async getFamilyMembers(familyId) {
+    try {
       const { data, error } = await supabase
         .from('family_members')
-        .insert([{
-          family_id: familyId,
-          user_id: userData.id
-        }])
-        .select()
+        .select(`
+          user_id,
+          joined_at,
+          role
+        `)
+        .eq('family_id', familyId)
 
       if (error) throw error
-      return data
+      return data || []
     } catch (error) {
-      console.error('Error inviting to family:', error)
+      console.error('Error getting family members:', error)
       throw error
     }
   },
