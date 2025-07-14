@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const TimePickerModal = ({ isOpen, onClose, initialTime, onSave, title = "Select Time" }) => {
+  console.log('TimePickerModal rendered with isOpen:', isOpen);
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState('PM');

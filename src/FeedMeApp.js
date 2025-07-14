@@ -149,7 +149,10 @@ const AddFeedingScreen = React.memo(({
             🕐 <span>Time</span>
           </div>
           <button
-            onClick={() => setShowTimePicker(true)}
+            onClick={() => {
+              console.log('Time picker button clicked!');
+              setShowTimePicker(true);
+            }}
             style={{
               width: '100%',
               padding: '0.875rem',
