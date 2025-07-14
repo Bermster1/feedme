@@ -2051,9 +2051,6 @@ const FeedMeApp = () => {
     );
   };
 
-  // Settings state
-  const [showSettings, setShowSettings] = useState(false);
-
   // Main App Render
   return (
     <div 
