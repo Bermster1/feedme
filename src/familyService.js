@@ -122,36 +122,99 @@ export const familyService = {
     }
   },
 
-  // Create invitation record and send magic link
-  async inviteToFamily(familyId, email, phone = null) {
+  // Generate invitation token for family
+  async generateInvitationLink(familyId) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // For now, we'll create a simple invitation system
-      // In a full implementation, this would:
-      // 1. Create an invitation record with a unique token
-      // 2. Send magic link email/SMS with the invitation token
-      // 3. When they click the link, they'd be redirected to signup with family pre-selected
+      // Generate a unique invitation token
+      const inviteToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
+      // Store invitation in localStorage for now (in production, this would be in database)
       const inviteData = {
+        token: inviteToken,
         family_id: familyId,
-        invited_email: email,
-        invited_phone: phone,
         invited_by: user.id,
-        status: 'pending',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
       }
-
-      // For now, just return the invitation data
-      // In production, this would also trigger the magic link email/SMS
+      
+      // Store in localStorage (temporary solution)
+      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+      existingInvites.push(inviteData)
+      localStorage.setItem('family_invitations', JSON.stringify(existingInvites))
+      
+      // Generate the invitation URL
+      const inviteUrl = `${window.location.origin}?invite=${inviteToken}`
+      
       return {
         success: true,
-        message: `Invitation will be sent to ${phone || email}`,
-        inviteData
+        inviteUrl,
+        inviteToken,
+        message: 'Invitation link generated successfully'
       }
     } catch (error) {
-      console.error('Error creating invitation:', error)
+      console.error('Error generating invitation link:', error)
+      throw error
+    }
+  },
+
+  // Validate and get invitation data from token
+  async getInvitationData(inviteToken) {
+    try {
+      // Get invitations from localStorage (in production, this would be from database)
+      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+      const invitation = existingInvites.find(inv => inv.token === inviteToken)
+      
+      if (!invitation) {
+        throw new Error('Invalid invitation token')
+      }
+      
+      // Check if invitation has expired
+      if (new Date() > new Date(invitation.expires_at)) {
+        throw new Error('Invitation has expired')
+      }
+      
+      return invitation
+    } catch (error) {
+      console.error('Error validating invitation:', error)
+      throw error
+    }
+  },
+
+  // Join family using invitation token
+  async joinFamilyWithInvitation(inviteToken) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      // Get invitation data
+      const invitation = await this.getInvitationData(inviteToken)
+      
+      // Add user as family member
+      const { error: memberError } = await supabase
+        .from('family_members')
+        .insert([{
+          family_id: invitation.family_id,
+          user_id: user.id,
+          joined_via_invitation: true
+        }])
+
+      if (memberError) throw memberError
+
+      // Mark invitation as used (remove from localStorage)
+      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+      const updatedInvites = existingInvites.filter(inv => inv.token !== inviteToken)
+      localStorage.setItem('family_invitations', JSON.stringify(updatedInvites))
+
+      return {
+        success: true,
+        family_id: invitation.family_id,
+        message: 'Successfully joined family!'
+      }
+    } catch (error) {
+      console.error('Error joining family with invitation:', error)
       throw error
     }
   },

@@ -2048,19 +2048,11 @@ const FeedMeApp = () => {
     );
   };
 
-  // State for invitation form
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [invitePhone, setInvitePhone] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
+  // State for invitation system
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  // Handle family member invitation
-  const handleInviteFamily = async () => {
-    if (!invitePhone.trim() && !inviteEmail.trim()) {
-      alert('Please enter either a phone number or email address');
-      return;
-    }
-
+  // Generate shareable invitation link
+  const handleGenerateInviteLink = async () => {
     if (!selectedBaby?.family_id) {
       alert('No family selected. Please select a baby first.');
       return;
@@ -2069,27 +2061,23 @@ const FeedMeApp = () => {
     try {
       setInviteLoading(true);
       
-      // Use email if provided, otherwise create a placeholder for phone
-      const emailToUse = inviteEmail.trim() || `invite-${Date.now()}@pending.local`;
-      const phoneToUse = invitePhone.trim() || null;
-      
-      const result = await familyService.inviteToFamily(
-        selectedBaby.family_id,
-        emailToUse,
-        phoneToUse
-      );
+      const result = await familyService.generateInvitationLink(selectedBaby.family_id);
       
       if (result.success) {
-        alert(result.message + '\n\nThey will receive a magic link to join your family and start tracking feedings together!');
-        setShowInviteForm(false);
-        setInvitePhone('');
-        setInviteEmail('');
+        // Copy to clipboard and show the link
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(result.inviteUrl);
+          alert(`✅ Invitation link copied to clipboard!\n\n${result.inviteUrl}\n\n📱 How to share:\n• Text message: "Join my baby feeding app: [paste link]"\n• WhatsApp/iMessage: Just paste the link\n• Email: Send the link directly\n\nWhen they click it and sign up, they'll automatically join your family!`);
+        } else {
+          // Fallback for browsers without clipboard API
+          prompt('Copy this invitation link and share it via text/email/WhatsApp:', result.inviteUrl);
+        }
       } else {
-        throw new Error('Failed to create invitation');
+        throw new Error('Failed to generate invitation link');
       }
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      alert('Failed to send invitation. Please try again.');
+      console.error('Error generating invitation link:', error);
+      alert('Failed to generate invitation link. Please try again.');
     } finally {
       setInviteLoading(false);
     }
@@ -2137,116 +2125,43 @@ const FeedMeApp = () => {
             {/* Invitation Section */}
             <div style={{marginBottom: '1rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd'}}>
               <h5 style={{margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600', color: '#0c4a6e'}}>
-                Add a family member or caregiver
+                Invite family members or caregivers
               </h5>
               <p style={{fontSize: '0.75rem', color: '#0369a1', margin: '0 0 1rem 0', lineHeight: '1.4'}}>
-                If someone else is caring for your baby, they should be added to the app to make sure they know when the last feed was!
+                Share a custom link with anyone caring for your baby. They'll automatically join your family when they sign up!
               </p>
               
-              {!showInviteForm ? (
-                <button
-                  onClick={() => setShowInviteForm(true)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  + Invite Family Member or Caregiver
-                </button>
-              ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                  <div>
-                    <label style={{display: 'block', fontSize: '0.75rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem'}}>
-                      Phone Number (preferred)
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={invitePhone}
-                      onChange={(e) => setInvitePhone(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '0.875rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  
-                  <div style={{textAlign: 'center', color: '#6b7280', fontSize: '0.75rem'}}>
-                    — or —
-                  </div>
-                  
-                  <div>
-                    <label style={{display: 'block', fontSize: '0.75rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem'}}>
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="partner@example.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '0.875rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  
-                  <div style={{display: 'flex', gap: '0.5rem'}}>
-                    <button
-                      onClick={() => {
-                        setShowInviteForm(false);
-                        setInvitePhone('');
-                        setInviteEmail('');
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        backgroundColor: '#f3f4f6',
-                        color: '#374151',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleInviteFamily}
-                      disabled={inviteLoading || (!invitePhone.trim() && !inviteEmail.trim())}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        backgroundColor: inviteLoading || (!invitePhone.trim() && !inviteEmail.trim()) ? '#9ca3af' : '#059669',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: '500',
-                        cursor: inviteLoading || (!invitePhone.trim() && !inviteEmail.trim()) ? 'not-allowed' : 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      {inviteLoading ? 'Sending...' : 'Send Invite'}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={handleGenerateInviteLink}
+                disabled={inviteLoading}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  backgroundColor: inviteLoading ? '#9ca3af' : '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  cursor: inviteLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {inviteLoading ? (
+                  'Generating Link...'
+                ) : (
+                  <>
+                    🔗 Generate & Copy Invitation Link
+                  </>
+                )}
+              </button>
+              
+              <p style={{fontSize: '0.75rem', color: '#6b7280', marginTop: '0.75rem', lineHeight: '1.4'}}>
+                💡 <strong>How to use:</strong> Click button → Link copied to clipboard → Text/email/share the link → They click it and sign up → Automatically added to your family!
+              </p>
             </div>
             
             <p style={{fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem'}}>

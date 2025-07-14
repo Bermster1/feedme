@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Mail, ArrowRight, Baby, HelpCircle } from 'lucide-react'
 
-const LoginScreen = ({ onSignIn, onRecover }) => {
+const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
@@ -191,9 +191,41 @@ const LoginScreen = ({ onSignIn, onRecover }) => {
         
         {!showRecovery ? (
           <>
-            <p style={styles.subtitle}>
-              Enter your email to get a magic link for instant sign in
-            </p>
+            {inviteToken ? (
+              <div style={{marginBottom: '1.5rem'}}>
+                <div style={{
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: '#0c4a6e',
+                    margin: '0 0 0.5rem 0'
+                  }}>
+                    🎉 You've been invited to join a family!
+                  </p>
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: '#0369a1',
+                    margin: 0,
+                    lineHeight: '1.4'
+                  }}>
+                    Sign in or create an account to start tracking feedings together.
+                  </p>
+                </div>
+                <p style={styles.subtitle}>
+                  Enter your email to get a magic link
+                </p>
+              </div>
+            ) : (
+              <p style={styles.subtitle}>
+                Enter your email to get a magic link for instant sign in
+              </p>
+            )}
             
             <form onSubmit={handleSubmit} style={styles.form}>
               <input
