@@ -8,13 +8,11 @@ const SettingsScreen = ({ onClose }) => {
   console.log('SettingsScreen component loaded!'); // Debug log
   const [currentView, setCurrentView] = useState('main'); // 'main', 'invite', 'family-details'
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [generatedInviteUrl, setGeneratedInviteUrl] = useState('');
   
   const { selectedBaby, activeBabies, families } = useFamilies();
   const { signOut } = useAuth();
 
-  // Generate invitation link
+  // Generate invitation link and share directly
   const handleGenerateInviteLink = async () => {
     if (!selectedBaby?.family_id) {
       alert('No family selected. Please select a baby first.');
@@ -26,17 +24,37 @@ const SettingsScreen = ({ onClose }) => {
       const result = await familyService.generateInvitationLink(selectedBaby.family_id);
       
       if (result.success) {
-        // Try to copy to clipboard (don't fail if it doesn't work on mobile)
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(result.inviteUrl);
+        // Directly open native share sheet if available
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Join my baby feeding tracker',
+              text: 'Join my family on Feed Me to track baby feedings together!',
+              url: result.inviteUrl
+            });
+          } catch (shareError) {
+            // User cancelled share or share failed, fallback to clipboard
+            if (shareError.name !== 'AbortError') {
+              console.warn('Share failed, copying to clipboard:', shareError);
+              await navigator.clipboard.writeText(result.inviteUrl);
+              alert('Link copied to clipboard!');
+            }
           }
-        } catch (clipboardError) {
-          console.warn('Clipboard copy failed:', clipboardError);
+        } else {
+          // Fallback: copy to clipboard and show alert
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(result.inviteUrl);
+              alert('Link copied to clipboard! You can now paste it in any app to share.');
+            } else {
+              // Final fallback: show the link
+              prompt('Copy this invitation link to share:', result.inviteUrl);
+            }
+          } catch (clipboardError) {
+            console.warn('Clipboard copy failed, showing link:', clipboardError);
+            prompt('Copy this invitation link to share:', result.inviteUrl);
+          }
         }
-        
-        setGeneratedInviteUrl(result.inviteUrl);
-        setShowShareModal(true);
       } else {
         throw new Error('Failed to generate invitation link');
       }
@@ -165,255 +183,6 @@ const SettingsScreen = ({ onClose }) => {
     }
   };
 
-  // Share Modal Component
-  const ShareModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      zIndex: 1001,
-      display: 'flex',
-      alignItems: 'flex-end'
-    }}>
-      <div style={{
-        width: '100%',
-        backgroundColor: 'white',
-        borderTopLeftRadius: '16px',
-        borderTopRightRadius: '16px',
-        padding: '1.5rem',
-        maxHeight: '70vh',
-        overflow: 'auto'
-      }}>
-        {/* Header */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '1.5rem'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '4px',
-            backgroundColor: '#d1d5db',
-            borderRadius: '2px',
-            margin: '0 auto 1rem auto'
-          }}></div>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: '600',
-            color: '#1f2937',
-            margin: '0 0 0.5rem 0'
-          }}>
-            Share Invitation Link
-          </h3>
-          <p style={{
-            fontSize: '0.875rem',
-            color: '#6b7280',
-            margin: 0
-          }}>
-            When they click this link and sign up, they'll join your family
-          </p>
-        </div>
-
-        {/* Link Display */}
-        <div style={{
-          backgroundColor: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginBottom: '1.5rem',
-          wordBreak: 'break-all',
-          fontSize: '0.875rem',
-          color: '#374151',
-          fontFamily: 'monospace'
-        }}>
-          {generatedInviteUrl}
-        </div>
-
-        {/* Share Options */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '1rem',
-          marginBottom: '1.5rem'
-        }}>
-          <button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: 'Join my baby feeding tracker',
-                  text: 'Join my family on Feed Me to track baby feedings together!',
-                  url: generatedInviteUrl
-                });
-              } else {
-                window.location.href = `sms:&body=Join my baby feeding app: ${generatedInviteUrl}`;
-              }
-            }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '1rem 0.5rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#22c55e',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.5rem',
-              fontSize: '1.5rem'
-            }}>
-              💬
-            </div>
-            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
-              Messages
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              window.location.href = `mailto:?subject=Join my baby feeding tracker&body=Join my family on Feed Me to track baby feedings together! ${generatedInviteUrl}`;
-            }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '1rem 0.5rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#3b82f6',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.5rem',
-              fontSize: '1.5rem'
-            }}>
-              ✉️
-            </div>
-            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
-              Mail
-            </span>
-          </button>
-
-          <button
-            onClick={async () => {
-              try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                  await navigator.clipboard.writeText(generatedInviteUrl);
-                  alert('Link copied to clipboard!');
-                } else {
-                  prompt('Copy this invitation link:', generatedInviteUrl);
-                }
-              } catch (err) {
-                console.warn('Clipboard failed, using fallback:', err);
-                prompt('Copy this invitation link:', generatedInviteUrl);
-              }
-            }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '1rem 0.5rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#8b5cf6',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.5rem',
-              fontSize: '1.5rem'
-            }}>
-              📋
-            </div>
-            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
-              Copy
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Join my baby feeding app: ${generatedInviteUrl}`)}`;
-              window.open(whatsappUrl, '_blank');
-            }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '1rem 0.5rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#25d366',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.5rem',
-              fontSize: '1.5rem'
-            }}>
-              📱
-            </div>
-            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
-              WhatsApp
-            </span>
-          </button>
-        </div>
-
-        {/* Cancel Button */}
-        <button
-          onClick={() => {
-            setShowShareModal(false);
-            setGeneratedInviteUrl('');
-          }}
-          style={{
-            width: '100%',
-            padding: '1rem',
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '1rem',
-            cursor: 'pointer'
-          }}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-
   // Main Settings View
   const MainSettingsView = () => (
     <>
@@ -437,7 +206,7 @@ const SettingsScreen = ({ onClose }) => {
           ) : (
             <>
               <Plus size={20} />
-              Invite to Family
+              Get my share link
             </>
           )}
         </button>
@@ -580,9 +349,6 @@ const SettingsScreen = ({ onClose }) => {
         {currentView === 'main' && <MainSettingsView />}
         {currentView === 'family-details' && <FamilyDetailsView />}
       </div>
-
-      {/* Share Modal */}
-      {showShareModal && <ShareModal />}
     </div>
   );
 };
