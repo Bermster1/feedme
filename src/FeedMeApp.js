@@ -6,7 +6,7 @@ import { diaperService } from './diaperService';
 import { useFamilies } from './useFamilies';
 import { useAuth } from './AuthContext';
 import SettingsScreen from './SettingsScreen';
-import IOSDateTimePicker from './IOSDateTimePicker';
+import CupertinoDateTimePicker from './CupertinoDateTimePicker';
 
 // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = (date = new Date()) => {
@@ -287,7 +287,7 @@ const FeedMeApp = () => {
   const { selectedBaby, activeBabies, setSelectedBaby } = useFamilies();
   
   // Production ready version - authentication integrated
-  console.log('FeedMeApp loaded with multi-baby authentication - VERSION 2024-12-14-16:00 - TimePickerModal included');
+  console.log('FeedMeApp loaded with multi-baby authentication - VERSION 2024-12-14-16:15 - CupertinoDateTimePicker included');
 
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -2079,8 +2079,8 @@ const FeedMeApp = () => {
         </>
       )}
       
-      {/* iOS DateTime Picker Modal */}
-      <IOSDateTimePicker
+      {/* Cupertino DateTime Picker Modal */}
+      <CupertinoDateTimePicker
         isOpen={showDateTimePicker}
         onClose={() => setShowDateTimePicker(false)}
         initialDateTime={{ date: selectedDate, time: selectedTime }}
