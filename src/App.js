@@ -36,10 +36,10 @@ const AppContent = () => {
     }
   }, []);
 
-  // Process invitation after user is authenticated and families are loaded
+  // Process invitation after user is authenticated (don't wait for families to load)
   useEffect(() => {
     const processInvitation = async () => {
-      if (inviteToken && isAuthenticated && !inviteProcessing && !familiesLoading) {
+      if (inviteToken && isAuthenticated && !inviteProcessing) {
         try {
           setInviteProcessing(true);
           console.log('Processing invitation token:', inviteToken);
@@ -68,7 +68,7 @@ const AppContent = () => {
     };
 
     processInvitation();
-  }, [inviteToken, isAuthenticated, inviteProcessing, familiesLoading, loadData]);
+  }, [inviteToken, isAuthenticated, inviteProcessing, loadData]);
 
   // Production version with authentication
   console.log('Feed Me App - Authentication System Active');
@@ -139,25 +139,7 @@ const AppContent = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <LoginScreen 
-        onSignIn={signInWithMagicLink}
-        onRecover={recoverAccount}
-        inviteToken={inviteToken}
-      />
-    );
-  }
-
-  if (needsSetup && !inviteToken && !inviteProcessing) {
-    return (
-      <SetupScreen 
-        onSetupComplete={createFirstFamilyAndBaby}
-      />
-    );
-  }
-
-  // Show loading while processing invitation
+  // Show loading while processing invitation (even if not authenticated yet)
   if (inviteProcessing) {
     return (
       <div style={{
@@ -176,6 +158,24 @@ const AppContent = () => {
           Please wait while we add you to the family
         </div>
       </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen 
+        onSignIn={signInWithMagicLink}
+        onRecover={recoverAccount}
+        inviteToken={inviteToken}
+      />
+    );
+  }
+
+  if (needsSetup && !inviteToken && !inviteProcessing) {
+    return (
+      <SetupScreen 
+        onSetupComplete={createFirstFamilyAndBaby}
+      />
     );
   }
 
