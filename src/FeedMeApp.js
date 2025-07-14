@@ -2113,6 +2113,11 @@ const FeedMeApp = () => {
           {activeTab === 'totals' && <TotalsScreen />}
         </>
       )}
+      
+      {/* Settings Screen */}
+      {showSettings && (
+        <SettingsScreen onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 };
