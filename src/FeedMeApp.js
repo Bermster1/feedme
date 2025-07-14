@@ -6,7 +6,7 @@ import { diaperService } from './diaperService';
 import { useFamilies } from './useFamilies';
 import { useAuth } from './AuthContext';
 import SettingsScreen from './SettingsScreen';
-import TimePickerModal from './TimePickerModal';
+import DateTimePicker from './DateTimePicker';
 
 // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = (date = new Date()) => {
@@ -318,8 +318,8 @@ const FeedMeApp = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showBabySelector, setShowBabySelector] = useState(false);
   
-  // Time picker state
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  // DateTime picker state
+  const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   
   // Calculate baby's age in weeks from birth date
   const babyAgeWeeks = selectedBaby?.birth_date ? 
