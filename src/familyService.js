@@ -125,16 +125,10 @@ export const familyService = {
   // Generate invitation token for family
   async generateInvitationLink(familyId) {
     try {
-      console.log('=== MOBILE DEBUG: Starting generateInvitationLink ===')
-      console.log('familyId:', familyId)
-      console.log('typeof familyId:', typeof familyId)
-      console.log('supabase object:', supabase)
+      console.log('Generating invitation link for family:', familyId)
       
       const { data: { user } } = await supabase.auth.getUser()
-      console.log('Auth response:', { data: { user } })
       if (!user) throw new Error('Not authenticated')
-      
-      console.log('User authenticated:', user.id)
 
       // Generate a unique invitation token
       let randomPart
@@ -184,16 +178,7 @@ export const familyService = {
         message: 'Invitation link generated successfully'
       }
     } catch (error) {
-      console.error('=== MOBILE DEBUG: Error in generateInvitationLink ===')
-      console.error('Error:', error)
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-      
-      // Temporary mobile debugging - remove later
-      if (typeof window !== 'undefined') {
-        alert(`MOBILE DEBUG - Error: ${error.message}\n\nStack: ${error.stack?.substring(0, 200)}`)
-      }
-      
+      console.error('Error generating invitation link:', error)
       throw error
     }
   },

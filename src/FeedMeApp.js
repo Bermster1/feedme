@@ -2073,10 +2073,17 @@ const FeedMeApp = () => {
       console.log('generateInvitationLink result:', result);
       
       if (result.success) {
-        // Copy to clipboard and show share modal
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(result.inviteUrl);
+        // Try to copy to clipboard (don't fail if it doesn't work on mobile)
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(result.inviteUrl);
+            console.log('Link copied to clipboard successfully');
+          }
+        } catch (clipboardError) {
+          console.warn('Clipboard copy failed (mobile restriction):', clipboardError);
+          // Don't throw error - just continue without clipboard copy
         }
+        
         setGeneratedInviteUrl(result.inviteUrl);
         setShowShareModal(true);
       } else {
@@ -2373,10 +2380,17 @@ const FeedMeApp = () => {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText(generatedInviteUrl);
-                alert('Link copied to clipboard!');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  await navigator.clipboard.writeText(generatedInviteUrl);
+                  alert('Link copied to clipboard!');
+                } else {
+                  // Fallback for mobile - show link in prompt
+                  prompt('Copy this invitation link:', generatedInviteUrl);
+                }
               } catch (err) {
-                console.error('Failed to copy:', err);
+                console.warn('Clipboard failed, using fallback:', err);
+                // Fallback for mobile clipboard restrictions
+                prompt('Copy this invitation link:', generatedInviteUrl);
               }
             }}
             style={{
