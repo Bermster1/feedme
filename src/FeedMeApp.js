@@ -2050,6 +2050,8 @@ const FeedMeApp = () => {
 
   // State for invitation system
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [generatedInviteUrl, setGeneratedInviteUrl] = useState('');
 
   // Generate shareable invitation link
   const handleGenerateInviteLink = async () => {
@@ -2069,14 +2071,12 @@ const FeedMeApp = () => {
       console.log('generateInvitationLink result:', result);
       
       if (result.success) {
-        // Copy to clipboard and show the link
+        // Copy to clipboard and show share modal
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(result.inviteUrl);
-          alert(`✅ Invitation link copied to clipboard!\n\n${result.inviteUrl}\n\n📱 How to share:\n• Text message: "Join my baby feeding app: [paste link]"\n• WhatsApp/iMessage: Just paste the link\n• Email: Send the link directly\n\nWhen they click it and sign up, they'll automatically join your family!`);
-        } else {
-          // Fallback for browsers without clipboard API
-          prompt('Copy this invitation link and share it via text/email/WhatsApp:', result.inviteUrl);
         }
+        setGeneratedInviteUrl(result.inviteUrl);
+        setShowShareModal(true);
       } else {
         throw new Error('Failed to generate invitation link');
       }
@@ -2219,6 +2219,252 @@ const FeedMeApp = () => {
     );
   };
 
+  // Share Modal Component
+  const ShareModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'flex-end'
+    }}>
+      <div style={{
+        width: '100%',
+        backgroundColor: 'white',
+        borderTopLeftRadius: '16px',
+        borderTopRightRadius: '16px',
+        padding: '1.5rem',
+        maxHeight: '70vh',
+        overflow: 'auto'
+      }}>
+        {/* Header */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '4px',
+            backgroundColor: '#d1d5db',
+            borderRadius: '2px',
+            margin: '0 auto 1rem auto'
+          }}></div>
+          <h3 style={{
+            fontSize: '1.125rem',
+            fontWeight: '600',
+            color: '#1f2937',
+            margin: '0 0 0.5rem 0'
+          }}>
+            Share Invitation Link
+          </h3>
+          <p style={{
+            fontSize: '0.875rem',
+            color: '#6b7280',
+            margin: 0
+          }}>
+            When they click this link and sign up, they'll join your family
+          </p>
+        </div>
+
+        {/* Link Display */}
+        <div style={{
+          backgroundColor: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          wordBreak: 'break-all',
+          fontSize: '0.875rem',
+          color: '#374151',
+          fontFamily: 'monospace'
+        }}>
+          {generatedInviteUrl}
+        </div>
+
+        {/* Share Options */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '1rem',
+          marginBottom: '1.5rem'
+        }}>
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Join my baby feeding tracker',
+                  text: 'Join my family on Feed Me to track baby feedings together!',
+                  url: generatedInviteUrl
+                });
+              } else {
+                // Fallback to Messages app on iOS
+                window.location.href = `sms:&body=Join my baby feeding app: ${generatedInviteUrl}`;
+              }
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '1rem 0.5rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              backgroundColor: '#22c55e',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '0.5rem',
+              fontSize: '1.5rem'
+            }}>
+              💬
+            </div>
+            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
+              Messages
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              window.location.href = `mailto:?subject=Join my baby feeding tracker&body=Join my family on Feed Me to track baby feedings together! ${generatedInviteUrl}`;
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '1rem 0.5rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              backgroundColor: '#3b82f6',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '0.5rem',
+              fontSize: '1.5rem'
+            }}>
+              ✉️
+            </div>
+            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
+              Mail
+            </span>
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(generatedInviteUrl);
+                alert('Link copied to clipboard!');
+              } catch (err) {
+                console.error('Failed to copy:', err);
+              }
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '1rem 0.5rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              backgroundColor: '#8b5cf6',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '0.5rem',
+              fontSize: '1.5rem'
+            }}>
+              📋
+            </div>
+            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
+              Copy
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              // Try WhatsApp web if available
+              const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Join my baby feeding app: ${generatedInviteUrl}`)}`;
+              window.open(whatsappUrl, '_blank');
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '1rem 0.5rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              backgroundColor: '#25d366',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '0.5rem',
+              fontSize: '1.5rem'
+            }}>
+              📱
+            </div>
+            <span style={{fontSize: '0.75rem', color: '#374151', fontWeight: '500'}}>
+              WhatsApp
+            </span>
+          </button>
+        </div>
+
+        {/* Cancel Button */}
+        <button
+          onClick={() => {
+            setShowShareModal(false);
+            setGeneratedInviteUrl('');
+          }}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            backgroundColor: '#f3f4f6',
+            color: '#374151',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '600',
+            fontSize: '1rem',
+            cursor: 'pointer'
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
   // Main App Render
   return (
     <div 
@@ -2231,6 +2477,7 @@ const FeedMeApp = () => {
       }}
     >
       {showSettings && <SettingsScreen />}
+      {showShareModal && <ShareModal />}
       {currentScreen === 'addFeeding' ? (
         <AddFeedingScreen 
           key="add-feeding-screen"

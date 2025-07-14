@@ -26,10 +26,10 @@ const AppContent = () => {
     }
   }, []);
 
-  // Process invitation after user is authenticated
+  // Process invitation after user is authenticated and families are loaded
   useEffect(() => {
     const processInvitation = async () => {
-      if (inviteToken && isAuthenticated && !inviteProcessing) {
+      if (inviteToken && isAuthenticated && !inviteProcessing && !familiesLoading) {
         try {
           setInviteProcessing(true);
           console.log('Processing invitation token:', inviteToken);
@@ -37,11 +37,11 @@ const AppContent = () => {
           const result = await familyService.joinFamilyWithInvitation(inviteToken);
           if (result.success) {
             console.log('Successfully joined family via invitation');
-            alert('Welcome! You\'ve been added to the family and can now track feedings together.');
             // Refresh families to show the new family
             if (loadData) {
               await loadData();
             }
+            alert('Welcome! You\'ve been added to the family and can now track feedings together.');
           }
         } catch (error) {
           console.error('Error processing invitation:', error);
@@ -54,7 +54,7 @@ const AppContent = () => {
     };
 
     processInvitation();
-  }, [inviteToken, isAuthenticated, inviteProcessing, loadData]);
+  }, [inviteToken, isAuthenticated, inviteProcessing, familiesLoading, loadData]);
 
   // Production version with authentication
   console.log('Feed Me App - Authentication System Active');
@@ -135,11 +135,33 @@ const AppContent = () => {
     );
   }
 
-  if (needsSetup) {
+  if (needsSetup && !inviteToken && !inviteProcessing) {
     return (
       <SetupScreen 
         onSetupComplete={createFirstFamilyAndBaby}
       />
+    );
+  }
+
+  // Show loading while processing invitation
+  if (inviteProcessing) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        fontSize: '1rem',
+        color: '#6b7280',
+        textAlign: 'center'
+      }}>
+        <div style={{marginBottom: '1rem'}}>🎉</div>
+        <div>Joining your family...</div>
+        <div style={{fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem'}}>
+          Please wait while we add you to the family
+        </div>
+      </div>
     );
   }
 
