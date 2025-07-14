@@ -323,7 +323,7 @@ const FeedMeApp = () => {
   const { selectedBaby, activeBabies, setSelectedBaby } = useFamilies();
   
   // Production ready version - authentication integrated
-  console.log('FeedMeApp loaded with multi-baby authentication');
+  console.log('FeedMeApp loaded with multi-baby authentication - VERSION 2024-12-14-15:30');
 
   const [currentScreen, setCurrentScreen] = useState('home');
   const [selectedTime, setSelectedTime] = useState(() => {
