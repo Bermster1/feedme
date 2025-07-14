@@ -125,11 +125,16 @@ export const familyService = {
   // Generate invitation token for family
   async generateInvitationLink(familyId) {
     try {
+      console.log('Generating invitation link for family:', familyId)
+      
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
+      
+      console.log('User authenticated:', user.id)
 
       // Generate a unique invitation token
       const inviteToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      console.log('Generated token:', inviteToken)
       
       // Store invitation in localStorage for now (in production, this would be in database)
       const inviteData = {
@@ -140,13 +145,22 @@ export const familyService = {
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
       }
       
-      // Store in localStorage (temporary solution)
-      const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
-      existingInvites.push(inviteData)
-      localStorage.setItem('family_invitations', JSON.stringify(existingInvites))
+      try {
+        // Store in localStorage (temporary solution)
+        const existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
+        existingInvites.push(inviteData)
+        localStorage.setItem('family_invitations', JSON.stringify(existingInvites))
+        console.log('Stored invitation in localStorage')
+      } catch (storageError) {
+        console.warn('localStorage not available, proceeding without storage:', storageError)
+      }
       
       // Generate the invitation URL
-      const inviteUrl = `${window.location.origin}?invite=${inviteToken}`
+      const baseUrl = typeof window !== 'undefined' && window.location 
+        ? window.location.origin 
+        : 'https://feedme-eta.vercel.app'
+      const inviteUrl = `${baseUrl}?invite=${inviteToken}`
+      console.log('Generated invite URL:', inviteUrl)
       
       return {
         success: true,

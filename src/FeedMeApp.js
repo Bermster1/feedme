@@ -2053,6 +2053,9 @@ const FeedMeApp = () => {
 
   // Generate shareable invitation link
   const handleGenerateInviteLink = async () => {
+    console.log('handleGenerateInviteLink called');
+    console.log('selectedBaby:', selectedBaby);
+    
     if (!selectedBaby?.family_id) {
       alert('No family selected. Please select a baby first.');
       return;
@@ -2060,8 +2063,10 @@ const FeedMeApp = () => {
 
     try {
       setInviteLoading(true);
+      console.log('Calling generateInvitationLink with family_id:', selectedBaby.family_id);
       
       const result = await familyService.generateInvitationLink(selectedBaby.family_id);
+      console.log('generateInvitationLink result:', result);
       
       if (result.success) {
         // Copy to clipboard and show the link
