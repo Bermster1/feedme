@@ -36,7 +36,7 @@ const AddFeedingScreen = React.memo(({
   styles,
   presetOunces,
   getLocalDateString,
-  setShowTimePicker
+  setShowDateTimePicker
 }) => (
   <div>
     {/* Header */}
@@ -151,7 +151,7 @@ const AddFeedingScreen = React.memo(({
           <button
             onClick={() => {
               console.log('Time picker button clicked!');
-              setShowTimePicker(true);
+              setShowDateTimePicker(true);
             }}
             style={{
               width: '100%',
@@ -2051,7 +2051,7 @@ const FeedMeApp = () => {
           styles={styles}
           presetOunces={presetOunces}
           getLocalDateString={getLocalDateString}
-          setShowTimePicker={setShowTimePicker}
+          setShowDateTimePicker={setShowDateTimePicker}
         />
       ) : currentScreen === 'addSleep' ? (
         <div style={{padding: '2rem', textAlign: 'center'}}>
@@ -2079,13 +2079,16 @@ const FeedMeApp = () => {
         </>
       )}
       
-      {/* Time Picker Modal */}
-      <TimePickerModal
-        isOpen={showTimePicker}
-        onClose={() => setShowTimePicker(false)}
-        initialTime={selectedTime}
-        onSave={setSelectedTime}
-        title="Select Feeding Time"
+      {/* DateTime Picker Modal */}
+      <DateTimePicker
+        isOpen={showDateTimePicker}
+        onClose={() => setShowDateTimePicker(false)}
+        initialDateTime={{ date: selectedDate, time: selectedTime }}
+        onSave={(result) => {
+          setSelectedDate(result.date);
+          setSelectedTime(result.time);
+        }}
+        title="Select Date & Time"
       />
       
       {/* Settings Screen */}
