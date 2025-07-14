@@ -1591,7 +1591,10 @@ const FeedMeApp = () => {
         </div>
         
         <button 
-          onClick={() => setShowSettings(true)}
+          onClick={() => {
+            console.log('Settings button clicked!'); // Debug log
+            setShowSettings(true);
+          }}
           style={{
             background: 'none',
             border: 'none',

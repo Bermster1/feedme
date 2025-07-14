@@ -5,6 +5,7 @@ import { useFamilies } from './useFamilies';
 import { useAuth } from './AuthContext';
 
 const SettingsScreen = ({ onClose }) => {
+  console.log('SettingsScreen component loaded!'); // Debug log
   const [currentView, setCurrentView] = useState('main'); // 'main', 'invite', 'family-details'
   const [inviteLoading, setInviteLoading] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
