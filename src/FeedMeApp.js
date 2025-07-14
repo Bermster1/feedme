@@ -6,6 +6,7 @@ import { diaperService } from './diaperService';
 import { useFamilies } from './useFamilies';
 import { useAuth } from './AuthContext';
 import SettingsScreen from './SettingsScreen';
+import TimePickerModal from './TimePickerModal';
 
 // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = (date = new Date()) => {
@@ -34,7 +35,8 @@ const AddFeedingScreen = React.memo(({
   loading,
   styles,
   presetOunces,
-  getLocalDateString
+  getLocalDateString,
+  setShowTimePicker
 }) => (
   <div>
     {/* Header */}
@@ -146,68 +148,27 @@ const AddFeedingScreen = React.memo(({
           }}>
             🕐 <span>Time</span>
           </div>
-          <div style={{position: 'relative'}}>
-            <input
-              type="time"
-              value={(() => {
-                // Convert 12-hour to 24-hour for input value
-                let hour24 = selectedTime.hour;
-                if (selectedTime.period === 'PM' && selectedTime.hour !== 12) {
-                  hour24 += 12;
-                }
-                if (selectedTime.period === 'AM' && selectedTime.hour === 12) {
-                  hour24 = 0;
-                }
-                return `${hour24.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
-              })()}
-              onChange={(e) => {
-                const [hour24Str, minuteStr] = e.target.value.split(':');
-                const hour24 = parseInt(hour24Str);
-                const minute = parseInt(minuteStr);
-                
-                let hour12 = hour24;
-                const period = hour24 >= 12 ? 'PM' : 'AM';
-                if (hour24 > 12) hour12 -= 12;
-                if (hour24 === 0) hour12 = 12;
-                
-                setSelectedTime({
-                  hour: hour12,
-                  minute: minute,
-                  period: period
-                });
-              }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                cursor: 'pointer'
-              }}
-            />
-            <div
-              style={{
-                width: '100%',
-                padding: '0.875rem',
-                backgroundColor: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                pointerEvents: 'none',
-                minHeight: '48px'
-              }}
-            >
-              <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-                {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
-              </span>
-              <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
-            </div>
-          </div>
+          <button
+            onClick={() => setShowTimePicker(true)}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              backgroundColor: 'white',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              minHeight: '48px'
+            }}
+          >
+            <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+              {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+            </span>
+            <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
+          </button>
         </div>
       </div>
 
@@ -353,6 +314,9 @@ const FeedMeApp = () => {
   // Settings state
   const [showSettings, setShowSettings] = useState(false);
   const [showBabySelector, setShowBabySelector] = useState(false);
+  
+  // Time picker state
+  const [showTimePicker, setShowTimePicker] = useState(false);
   
   // Calculate baby's age in weeks from birth date
   const babyAgeWeeks = selectedBaby?.birth_date ? 
@@ -2084,6 +2048,7 @@ const FeedMeApp = () => {
           styles={styles}
           presetOunces={presetOunces}
           getLocalDateString={getLocalDateString}
+          setShowTimePicker={setShowTimePicker}
         />
       ) : currentScreen === 'addSleep' ? (
         <div style={{padding: '2rem', textAlign: 'center'}}>
@@ -2110,6 +2075,15 @@ const FeedMeApp = () => {
           {activeTab === 'totals' && <TotalsScreen />}
         </>
       )}
+      
+      {/* Time Picker Modal */}
+      <TimePickerModal
+        isOpen={showTimePicker}
+        onClose={() => setShowTimePicker(false)}
+        initialTime={selectedTime}
+        onSave={setSelectedTime}
+        title="Select Feeding Time"
+      />
       
       {/* Settings Screen */}
       {showSettings && (
