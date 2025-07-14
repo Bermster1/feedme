@@ -6,7 +6,7 @@ import { diaperService } from './diaperService';
 import { useFamilies } from './useFamilies';
 import { useAuth } from './AuthContext';
 import SettingsScreen from './SettingsScreen';
-import DateTimePicker from './DateTimePicker';
+import IOSDateTimePicker from './IOSDateTimePicker';
 
 // Helper function to get user's local date in YYYY-MM-DD format (not UTC)
 const getLocalDateString = (date = new Date()) => {
@@ -2079,8 +2079,8 @@ const FeedMeApp = () => {
         </>
       )}
       
-      {/* DateTime Picker Modal */}
-      <DateTimePicker
+      {/* iOS DateTime Picker Modal */}
+      <IOSDateTimePicker
         isOpen={showDateTimePicker}
         onClose={() => setShowDateTimePicker(false)}
         initialDateTime={{ date: selectedDate, time: selectedTime }}
