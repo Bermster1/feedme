@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Select Date & Time" }) => {
+  // Version: NATIVE_IOS_V2 - 4 columns, every minute
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
@@ -54,6 +55,13 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   };
 
   const dateOptions = generateDateOptions();
+  
+  // Debug logging
+  console.log('ProperIOSPicker NATIVE_IOS_V2 loaded:', {
+    dateOptions: dateOptions.length,
+    minutes: minutes.length,
+    hours: hours.length
+  });
 
   const handleSave = () => {
     const time = { hour: selectedHour, minute: selectedMinute, period: selectedPeriod };
