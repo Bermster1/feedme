@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Picker from 'react-mobile-picker';
+import { WheelPicker } from '@ncdai/react-wheel-picker';
 
 const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Select Date & Time" }) => {
   // Generate date options
@@ -31,10 +31,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     return dates;
   };
 
-  const dateOptions = generateDateOptions();
-  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = Array.from({ length: 12 }, (_, i) => i * 5); // 0, 5, 10, 15, ..., 55
-  const periods = ['AM', 'PM'];
+  const dateOptions = generateDateOptions().map(d => ({ label: d.label, value: d.value }));
+  const hours = Array.from({ length: 12 }, (_, i) => ({ label: `${i + 1}`, value: i + 1 }));
+  const minutes = Array.from({ length: 60 }, (_, i) => ({ label: String(i).padStart(2, '0'), value: i }));
+  const periods = [{ label: 'AM', value: 'AM' }, { label: 'PM', value: 'PM' }];
 
   // Initialize picker values
   const [pickerValue, setPickerValue] = useState(() => {
@@ -50,16 +50,14 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
       // Default to current time
       const now = new Date();
       let hour = now.getHours();
-      const currentMinute = now.getMinutes();
-      // Round to nearest 5-minute interval
-      const minute = Math.round(currentMinute / 5) * 5;
+      const minute = now.getMinutes();
       const period = hour >= 12 ? 'PM' : 'AM';
       hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
       
       return {
         date: 'Today',
         hour,
-        minute: minute === 60 ? 0 : minute, // Handle edge case where 60 rounds to 0
+        minute,
         period
       };
     }
@@ -69,12 +67,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
   useEffect(() => {
     if (initialDateTime && isOpen) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
-      // Round initialDateTime minute to nearest 5-minute interval
-      const roundedMinute = Math.round(initialDateTime.time.minute / 5) * 5;
       setPickerValue({
         date: dateOption ? dateOption.label : 'Today',
         hour: initialDateTime.time.hour,
-        minute: roundedMinute === 60 ? 0 : roundedMinute,
+        minute: initialDateTime.time.minute,
         period: initialDateTime.time.period
       });
     }
@@ -96,11 +92,21 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     onClose();
   };
 
-  const selections = {
-    date: dateOptions.map(d => d.label),
-    hour: hours,
-    minute: minutes,
-    period: periods
+  // Individual handlers for each picker
+  const handleDateChange = (value) => {
+    setPickerValue(prev => ({ ...prev, date: value }));
+  };
+  
+  const handleHourChange = (value) => {
+    setPickerValue(prev => ({ ...prev, hour: value }));
+  };
+  
+  const handleMinuteChange = (value) => {
+    setPickerValue(prev => ({ ...prev, minute: value }));
+  };
+  
+  const handlePeriodChange = (value) => {
+    setPickerValue(prev => ({ ...prev, period: value }));
   };
 
   if (!isOpen) return null;
@@ -222,61 +228,40 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
           <div className="ios-picker-container">
             <div className="ios-picker-selection-indicator"></div>
-            <Picker
-              value={pickerValue}
-              onChange={setPickerValue}
-              height={192}
-              itemHeight={32}
-              wheelMode="natural"
-            >
-              <Picker.Column name="date">
-                {selections.date.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="hour">
-                {selections.hour.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="minute">
-                {selections.minute.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {String(option).padStart(2, '0')}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="period">
-                {selections.period.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-            </Picker>
+            <div style={{ display: 'flex', height: '192px' }}>
+              <div style={{ flex: 2 }}>
+                <WheelPicker
+                  options={dateOptions}
+                  value={pickerValue.date}
+                  onValueChange={handleDateChange}
+                  visibleCount={6}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <WheelPicker
+                  options={hours}
+                  value={pickerValue.hour}
+                  onValueChange={handleHourChange}
+                  visibleCount={6}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <WheelPicker
+                  options={minutes}
+                  value={pickerValue.minute}
+                  onValueChange={handleMinuteChange}
+                  visibleCount={6}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <WheelPicker
+                  options={periods}
+                  value={pickerValue.period}
+                  onValueChange={handlePeriodChange}
+                  visibleCount={6}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
