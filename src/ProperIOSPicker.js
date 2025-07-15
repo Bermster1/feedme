@@ -135,7 +135,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       display: 'flex',
       position: 'relative',
       overflow: 'hidden',
-      padding: '0 20px' // Better side padding
+      padding: '0 20px', // Better side padding
+      alignItems: 'center' // Center content vertically
     },
     wheelColumn: {
       height: '100%',
@@ -159,15 +160,18 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       height: '100%',
       overflowY: 'scroll',
       scrollSnapType: 'y mandatory',
-      paddingTop: '78px', // Adjusted for smaller container (180px/2 - 12px)
-      paddingBottom: '78px', // Adjusted for smaller container
+      paddingTop: '78px', // Centered padding
+      paddingBottom: '78px', // Centered padding
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       WebkitOverflowScrolling: 'touch',
       isolation: 'isolate',
       contain: 'layout style', // Strict containment to prevent interference
       transform: 'translateZ(0)', // Force hardware acceleration and isolation
-      willChange: 'scroll-position' // Optimize for scrolling
+      willChange: 'scroll-position', // Optimize for scrolling
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center' // Center items vertically
     },
     wheelItem: {
       height: '24px', // Much smaller height for tighter spacing
@@ -210,12 +214,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const scrollTimeout = useRef(null);
     const isInitialized = useRef(false);
     
-    // For arrays with few items (like AM/PM), don't create scrolling behavior
-    // Only show the selected item for AM/PM
+    // For arrays with few items (like AM/PM), show both options
     const isAmPmColumn = items.length === 2 && (items[0] === 'AM' || items[0] === 'PM');
-    const scrollItems = isAmPmColumn ?
-      [selectedValue] : // Only show selected AM or PM
-      items;
+    const scrollItems = items; // Show all items including both AM and PM
 
     useEffect(() => {
       if (scrollerRef.current && !isScrolling.current) {
@@ -327,13 +328,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
               key={`${item}-${index}`} 
               style={getItemStyle(item, index)}
               onClick={() => {
-                if (isAmPmColumn) {
-                  // Toggle between AM and PM
-                  const newValue = item === 'AM' ? 'PM' : 'AM';
-                  onChange(newValue);
-                } else {
-                  onChange(item);
-                }
+                onChange(item);
               }}
             >
               {formatter(item)}

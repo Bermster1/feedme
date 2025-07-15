@@ -40,14 +40,10 @@ const AddFeedingScreen = React.memo(({
 }) => (
   <div>
     {/* Header */}
-    <div style={{...styles.header, justifyContent: 'space-between'}}>
+    <div style={{...styles.header, justifyContent: 'flex-start'}}>
       <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem'}}>
         <X size={24} color="#6b7280" />
       </button>
-      <h1 style={{fontSize: '1.25rem', fontWeight: '600', color: '#1f2937'}}>
-        {editingFeeding ? 'Edit Feeding' : 'Add Feeding'}
-      </h1>
-      <div style={{width: '40px'}}></div>
     </div>
 
     <div style={styles.formContainer}>
@@ -61,17 +57,6 @@ const AddFeedingScreen = React.memo(({
 
         {/* Time Selection */}
         <div>
-          <div style={{
-            fontSize: '0.875rem',
-            fontWeight: '500',
-            color: '#6b7280',
-            marginBottom: '0.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            🕐 <span>Time</span>
-          </div>
           <button
             onClick={() => {
               console.log('Time picker button clicked!');
