@@ -260,15 +260,15 @@ const AddFeedingScreen = React.memo(({
               <label>Nursing Timer</label>
             </div>
 
-            {/* Current Timer Display */}
+            {/* Timer Display */}
             <div style={styles.timerDisplay}>
-              <div style={styles.currentTimer}>
+              <div style={styles.leftTimer}>
                 <span style={styles.timerTime}>0M</span>
-                <span style={styles.timerLabel}>Current Side</span>
+                <span style={styles.timerLabel}>Left Side</span>
               </div>
-              <div style={styles.totalTimer}>
-                <span style={styles.timerTime}>0M 00S</span>
-                <span style={styles.timerLabel}>Total Time</span>
+              <div style={styles.rightTimer}>
+                <span style={styles.timerTime}>0M</span>
+                <span style={styles.timerLabel}>Right Side</span>
               </div>
             </div>
 
@@ -1344,7 +1344,7 @@ const FeedMeApp = () => {
       transition: 'all 0.2s ease'
     },
     toggleButtonActive: {
-      backgroundColor: '#22c55e',
+      backgroundColor: '#00704a',
       color: 'white'
     },
     toggleButtonInactive: {
@@ -1572,21 +1572,19 @@ const FeedMeApp = () => {
       marginBottom: '1.5rem',
       gap: '1rem'
     },
-    currentTimer: {
+    leftTimer: {
       flex: 1,
       textAlign: 'center',
-      backgroundColor: '#f0f9ff',
+      backgroundColor: '#f7f7f7',
       padding: '1rem',
-      borderRadius: '8px',
-      border: '2px solid #0ea5e9'
+      borderRadius: '8px'
     },
-    totalTimer: {
+    rightTimer: {
       flex: 1,
       textAlign: 'center',
-      backgroundColor: '#f0fdf4',
+      backgroundColor: '#f7f7f7',
       padding: '1rem',
-      borderRadius: '8px',
-      border: '2px solid #22c55e'
+      borderRadius: '8px'
     },
     timerTime: {
       display: 'block',
@@ -1609,21 +1607,23 @@ const FeedMeApp = () => {
     },
     sideButton: {
       flex: 1,
-      padding: '2rem 1rem',
-      backgroundColor: 'white',
-      border: '2px solid #e5e7eb',
+      backgroundColor: '#00704a',
+      border: 'none',
       borderRadius: '50%',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
-      minHeight: '120px',
+      width: '120px',
+      height: '120px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      margin: '0 auto',
+      boxShadow: '0 4px 12px rgba(0, 112, 74, 0.3)'
     },
     sideButtonText: {
       fontSize: '16px',
       fontWeight: '600',
-      color: '#374151'
+      color: 'white'
     },
     lastSideIndicator: {
       textAlign: 'center',
