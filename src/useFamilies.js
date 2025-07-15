@@ -37,6 +37,9 @@ export const useFamilies = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadData()
+    } else {
+      // If not authenticated, set loading to false to prevent infinite loading
+      setLoading(false)
     }
   }, [isAuthenticated])
 
