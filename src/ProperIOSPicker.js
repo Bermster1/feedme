@@ -1,42 +1,63 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Select Date & Time" }) => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
-  const [selectedHour, setSelectedHour] = useState(new Date().getHours() > 12 ? new Date().getHours() - 12 : new Date().getHours() || 12);
-  const [selectedMinute, setSelectedMinute] = useState(Math.round(new Date().getMinutes() / 5) * 5);
-  const [selectedPeriod, setSelectedPeriod] = useState(new Date().getHours() >= 12 ? 'PM' : 'AM');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+  });
+  const [selectedHour, setSelectedHour] = useState(() => {
+    const now = new Date();
+    let hour = now.getHours();
+    return hour > 12 ? hour - 12 : hour || 12;
+  });
+  const [selectedMinute, setSelectedMinute] = useState(() => new Date().getMinutes());
+  const [selectedPeriod, setSelectedPeriod] = useState(() => new Date().getHours() >= 12 ? 'PM' : 'AM');
 
   // Initialize with provided date/time
   useEffect(() => {
     if (initialDateTime && isOpen) {
-      const [, month, day] = initialDateTime.date.split('-').map(Number);
-      setSelectedMonth(month - 1);
-      setSelectedDay(day);
+      setSelectedDate(initialDateTime.date);
       setSelectedHour(initialDateTime.time.hour);
       setSelectedMinute(initialDateTime.time.minute);
       setSelectedPeriod(initialDateTime.time.period);
     }
   }, [initialDateTime, isOpen]);
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = Array.from({ length: 12 }, (_, i) => i * 5);
+  const minutes = Array.from({ length: 60 }, (_, i) => i); // Every minute 0-59
   const periods = ['AM', 'PM'];
 
-  // Get days in selected month (current year)
-  const getDaysInMonth = (month) => {
-    const currentYear = new Date().getFullYear();
-    return new Date(currentYear, month + 1, 0).getDate();
+  // Generate date options like native iOS (Today, specific dates, etc.)
+  const generateDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+    
+    // Add recent dates
+    for (let i = -2; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      let label;
+      if (i === -2) label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      else if (i === -1) label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      else if (i === 0) label = 'Today';
+      else if (i === 1) label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      else label = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      
+      dates.push({
+        label,
+        value: `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+      });
+    }
+    
+    return dates;
   };
 
-  const days = Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => i + 1);
+  const dateOptions = generateDateOptions();
 
   const handleSave = () => {
-    const currentYear = new Date().getFullYear();
-    const date = `${currentYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-${selectedDay.toString().padStart(2, '0')}`;
     const time = { hour: selectedHour, minute: selectedMinute, period: selectedPeriod };
-    onSave({ date, time });
+    onSave({ date: selectedDate, time });
     onClose();
   };
 
@@ -195,7 +216,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
             onChange(items[clampedIndex]);
           }
         }
-      }, 100);
+      }, 50); // Reduced timeout for more responsive behavior
     };
 
     const handleTouchStart = () => {
@@ -273,22 +294,14 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
 
           <div style={styles.pickerContainer}>
             <WheelColumn
-              items={months}
-              selectedValue={months[selectedMonth]}
-              onChange={(month) => {
-                const newMonthIndex = months.indexOf(month);
-                setSelectedMonth(newMonthIndex);
-                // Adjust day if it doesn't exist in new month
-                const maxDays = getDaysInMonth(newMonthIndex);
-                if (selectedDay > maxDays) {
-                  setSelectedDay(maxDays);
+              items={dateOptions.map(d => d.label)}
+              selectedValue={dateOptions.find(d => d.value === selectedDate)?.label || 'Today'}
+              onChange={(label) => {
+                const option = dateOptions.find(d => d.label === label);
+                if (option) {
+                  setSelectedDate(option.value);
                 }
               }}
-            />
-            <WheelColumn
-              items={days}
-              selectedValue={selectedDay}
-              onChange={setSelectedDay}
             />
             <WheelColumn
               items={hours}
