@@ -33,21 +33,17 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
   const dateOptions = generateDateOptions();
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minuteTens = [0, 1, 2, 3, 4, 5]; // 0x, 1x, 2x, 3x, 4x, 5x
-  const minuteOnes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // x0, x1, x2, ... x9
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
   const periods = ['AM', 'PM'];
 
   // Initialize picker values
   const [pickerValue, setPickerValue] = useState(() => {
     if (initialDateTime) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
-      const tens = Math.floor(initialDateTime.time.minute / 10);
-      const ones = initialDateTime.time.minute % 10;
       return {
         date: dateOption ? dateOption.label : 'Today',
         hour: initialDateTime.time.hour,
-        minuteTens: tens,
-        minuteOnes: ones,
+        minute: initialDateTime.time.minute,
         period: initialDateTime.time.period
       };
     } else {
@@ -58,13 +54,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
       const period = hour >= 12 ? 'PM' : 'AM';
       hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
       
-      const tens = Math.floor(minute / 10);
-      const ones = minute % 10;
       return {
         date: 'Today',
         hour,
-        minuteTens: tens,
-        minuteOnes: ones,
+        minute,
         period
       };
     }
@@ -74,13 +67,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
   useEffect(() => {
     if (initialDateTime && isOpen) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
-      const tens = Math.floor(initialDateTime.time.minute / 10);
-      const ones = initialDateTime.time.minute % 10;
       setPickerValue({
         date: dateOption ? dateOption.label : 'Today',
         hour: initialDateTime.time.hour,
-        minuteTens: tens,
-        minuteOnes: ones,
+        minute: initialDateTime.time.minute,
         period: initialDateTime.time.period
       });
     }
@@ -91,14 +81,11 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     const selectedDate = dateOptions.find(d => d.label === pickerValue.date);
     const dateValue = selectedDate ? selectedDate.value : dateOptions.find(d => d.label === 'Today').value;
     
-    // Combine tens and ones to get the full minute
-    const fullMinute = (pickerValue.minuteTens * 10) + pickerValue.minuteOnes;
-    
     onSave({
       date: dateValue,
       time: {
         hour: pickerValue.hour,
-        minute: fullMinute,
+        minute: pickerValue.minute,
         period: pickerValue.period
       }
     });
@@ -108,10 +95,16 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
   const selections = {
     date: dateOptions.map(d => d.label),
     hour: hours,
-    minuteTens: minuteTens,
-    minuteOnes: minuteOnes,
+    minute: minutes,
     period: periods
   };
+
+  console.log('IOSDateTimePicker selections:', {
+    date: selections.date.length,
+    hour: selections.hour.length, 
+    minute: selections.minute.length,
+    period: selections.period.length
+  });
 
   if (!isOpen) return null;
 
@@ -172,7 +165,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         }
         
         .ios-picker-container {
-          height: 168px;
+          height: 216px;
           background-color: #f8f9fa;
           position: relative;
           overflow: hidden;
@@ -236,7 +229,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
             <Picker
               value={pickerValue}
               onChange={setPickerValue}
-              height={168}
+              height={216}
               itemHeight={24}
               wheelMode="natural"
             >
@@ -264,24 +257,12 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
                 ))}
               </Picker.Column>
               
-              <Picker.Column name="minuteTens">
-                {selections.minuteTens.map(option => (
+              <Picker.Column name="minute">
+                {selections.minute.map(option => (
                   <Picker.Item key={option} value={option}>
                     {({ selected }) => (
                       <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="minuteOnes">
-                {selections.minuteOnes.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
+                        {String(option).padStart(2, '0')}
                       </div>
                     )}
                   </Picker.Item>
