@@ -115,7 +115,7 @@ const AppContent = () => {
     families: families?.length,
     babies: babies?.length,
     user: user?.email,
-    inviteToken: inviteToken ? 'present' : 'none',
+    inviteToken: inviteToken ? inviteToken : 'none',
     inviteProcessing,
     loading,
     loadingTimeout
@@ -233,6 +233,28 @@ const AppContent = () => {
         onRecover={recoverAccount}
         inviteToken={inviteToken}
       />
+    );
+  }
+
+  // If user is authenticated and has an invitation token, wait for invitation processing
+  if (isAuthenticated && inviteToken && !inviteProcessing) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        fontSize: '1rem',
+        color: '#6b7280',
+        textAlign: 'center'
+      }}>
+        <div style={{marginBottom: '1rem'}}>🎉</div>
+        <div>Processing your invitation...</div>
+        <div style={{fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem'}}>
+          Getting ready to add you to the family
+        </div>
+      </div>
     );
   }
 
