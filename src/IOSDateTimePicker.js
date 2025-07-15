@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WheelPicker } from '@ncdai/react-wheel-picker';
+import Picker from 'react-mobile-picker';
 
 const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Select Date & Time" }) => {
   // Generate date options
@@ -31,10 +31,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     return dates;
   };
 
-  const dateOptions = generateDateOptions().map(d => ({ label: d.label, value: d.value }));
-  const hours = Array.from({ length: 12 }, (_, i) => ({ label: `${i + 1}`, value: i + 1 }));
-  const minutes = Array.from({ length: 60 }, (_, i) => ({ label: String(i).padStart(2, '0'), value: i }));
-  const periods = [{ label: 'AM', value: 'AM' }, { label: 'PM', value: 'PM' }];
+  const dateOptions = generateDateOptions();
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = Array.from({ length: 60 }, (_, i) => i); // Full 60 minutes
+  const periods = ['AM', 'PM'];
 
   // Initialize picker values
   const [pickerValue, setPickerValue] = useState(() => {
@@ -92,21 +92,11 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     onClose();
   };
 
-  // Individual handlers for each picker
-  const handleDateChange = (value) => {
-    setPickerValue(prev => ({ ...prev, date: value }));
-  };
-  
-  const handleHourChange = (value) => {
-    setPickerValue(prev => ({ ...prev, hour: value }));
-  };
-  
-  const handleMinuteChange = (value) => {
-    setPickerValue(prev => ({ ...prev, minute: value }));
-  };
-  
-  const handlePeriodChange = (value) => {
-    setPickerValue(prev => ({ ...prev, period: value }));
+  const selections = {
+    date: dateOptions.map(d => d.label),
+    hour: hours,
+    minute: minutes,
+    period: periods
   };
 
   if (!isOpen) return null;
@@ -174,7 +164,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         }
         
         .ios-picker-item {
-          height: 32px;
+          height: 28px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -204,8 +194,8 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
           top: 50%;
           left: 0;
           right: 0;
-          height: 32px;
-          margin-top: -16px;
+          height: 28px;
+          margin-top: -14px;
           border-top: 1px solid #c6c6c8;
           border-bottom: 1px solid #c6c6c8;
           background-color: rgba(34, 197, 94, 0.08);
@@ -228,40 +218,61 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
           <div className="ios-picker-container">
             <div className="ios-picker-selection-indicator"></div>
-            <div style={{ display: 'flex', height: '192px' }}>
-              <div style={{ flex: 2 }}>
-                <WheelPicker
-                  options={dateOptions}
-                  value={pickerValue.date}
-                  onValueChange={handleDateChange}
-                  visibleCount={6}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <WheelPicker
-                  options={hours}
-                  value={pickerValue.hour}
-                  onValueChange={handleHourChange}
-                  visibleCount={6}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <WheelPicker
-                  options={minutes}
-                  value={pickerValue.minute}
-                  onValueChange={handleMinuteChange}
-                  visibleCount={6}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <WheelPicker
-                  options={periods}
-                  value={pickerValue.period}
-                  onValueChange={handlePeriodChange}
-                  visibleCount={6}
-                />
-              </div>
-            </div>
+            <Picker
+              value={pickerValue}
+              onChange={setPickerValue}
+              height={192}
+              itemHeight={28}
+              wheelMode="natural"
+            >
+              <Picker.Column name="date">
+                {selections.date.map(option => (
+                  <Picker.Item key={option} value={option}>
+                    {({ selected }) => (
+                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
+                        {option}
+                      </div>
+                    )}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+              
+              <Picker.Column name="hour">
+                {selections.hour.map(option => (
+                  <Picker.Item key={option} value={option}>
+                    {({ selected }) => (
+                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
+                        {option}
+                      </div>
+                    )}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+              
+              <Picker.Column name="minute">
+                {selections.minute.map(option => (
+                  <Picker.Item key={option} value={option}>
+                    {({ selected }) => (
+                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
+                        {String(option).padStart(2, '0')}
+                      </div>
+                    )}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+              
+              <Picker.Column name="period">
+                {selections.period.map(option => (
+                  <Picker.Item key={option} value={option}>
+                    {({ selected }) => (
+                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
+                        {option}
+                      </div>
+                    )}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+            </Picker>
           </div>
         </div>
       </div>
