@@ -19,7 +19,7 @@ const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
 
     try {
       setLoading(true)
-      await onSignIn(email.trim())
+      await onSignIn(email.trim(), pendingInvite)
       setMagicLinkSent(true)
     } catch (error) {
       console.error('Login error:', error)

@@ -2,15 +2,23 @@ import { supabase } from './supabaseClient'
 
 export const authService = {
   // Send magic link to email
-  async signInWithMagicLink(email) {
+  async signInWithMagicLink(email, inviteToken = null) {
     try {
       console.log('AuthService: Sending magic link to:', email)
-      console.log('AuthService: Redirect URL:', window.location.origin)
+      
+      // Build redirect URL with invitation token if present
+      let redirectUrl = window.location.origin
+      if (inviteToken) {
+        redirectUrl += `?invite=${inviteToken}`
+        console.log('AuthService: Including invitation token in redirect')
+      }
+      
+      console.log('AuthService: Redirect URL:', redirectUrl)
       
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin
+          emailRedirectTo: redirectUrl
         }
       })
       

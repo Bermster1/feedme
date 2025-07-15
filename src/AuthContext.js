@@ -50,10 +50,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const signInWithMagicLink = async (email) => {
+  const signInWithMagicLink = async (email, inviteToken = null) => {
     try {
       setLoading(true)
-      return await authService.signInWithMagicLink(email)
+      return await authService.signInWithMagicLink(email, inviteToken)
     } catch (error) {
       console.error('Error signing in with magic link:', error)
       throw error
