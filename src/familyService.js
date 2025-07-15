@@ -266,8 +266,7 @@ export const familyService = {
         .from('family_members')
         .insert([{
           family_id: invitation.family_id,
-          user_id: user.id,
-          joined_via_invitation: true
+          user_id: user.id
         }])
 
       if (memberError) throw memberError
