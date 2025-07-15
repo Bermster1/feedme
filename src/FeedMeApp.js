@@ -36,7 +36,9 @@ const AddFeedingScreen = React.memo(({
   styles,
   presetOunces,
   getLocalDateString,
-  setShowDateTimePicker
+  setShowDateTimePicker,
+  feedingMode,
+  setFeedingMode
 }) => (
   <div>
     {/* Header - now empty */}
@@ -45,8 +47,32 @@ const AddFeedingScreen = React.memo(({
     </div>
 
     <div style={styles.formContainer}>
-      {/* Date and Time Selection */}
-      <div style={styles.formSection}>
+      {/* Nursing/Bottle Toggle */}
+      <div style={styles.toggleContainer}>
+        <button
+          onClick={() => setFeedingMode('nursing')}
+          style={{
+            ...styles.toggleButton,
+            ...(feedingMode === 'nursing' ? styles.toggleButtonActive : styles.toggleButtonInactive)
+          }}
+        >
+          Nursing
+        </button>
+        <button
+          onClick={() => setFeedingMode('bottle')}
+          style={{
+            ...styles.toggleButton,
+            ...(feedingMode === 'bottle' ? styles.toggleButtonActive : styles.toggleButtonInactive)
+          }}
+        >
+          Bottle
+        </button>
+      </div>
+
+      {feedingMode === 'bottle' ? (
+        <>
+          {/* Date and Time Selection */}
+          <div style={styles.formSection}>
         <div style={{...styles.formLabel, justifyContent: 'space-between'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
             <Clock size={20} color="#007AFF" />
@@ -125,7 +151,7 @@ const AddFeedingScreen = React.memo(({
               setCustomOunces(e.target.value);
               setSelectedOunces(null);
             }}
-            style={{...styles.input, maxWidth: '120px'}}
+            style={{...styles.input, maxWidth: '120px', fontSize: '0.875rem'}}
           />
           <span style={{
             position: 'absolute',
@@ -165,10 +191,9 @@ const AddFeedingScreen = React.memo(({
           }}
         />
       </div>
-    </div>
 
-    {/* Action Buttons */}
-    <div style={styles.actionButtons}>
+      {/* Action Buttons */}
+      <div style={styles.actionButtons}>
       <div style={styles.buttonContainer}>
         <button
           onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
@@ -184,6 +209,128 @@ const AddFeedingScreen = React.memo(({
         </button>
         
       </div>
+      </div>
+        </>
+      ) : (
+        // Nursing Interface
+        <>
+          {/* Date and Time Selection - same as bottle */}
+          <div style={styles.formSection}>
+            <div style={{...styles.formLabel, justifyContent: 'space-between'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                <Clock size={20} color="#007AFF" />
+                <label>When did you start feeding?</label>
+              </div>
+              <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem'}}>
+                <X size={20} color="#6b7280" />
+              </button>
+            </div>
+            
+            <div>
+              <button
+                onClick={() => {
+                  setShowDateTimePicker(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  minHeight: '48px'
+                }}
+              >
+                <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
+                  {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+                </span>
+                <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Nursing Timer Section */}
+          <div style={styles.formSection}>
+            <div style={styles.formLabel}>
+              <Baby size={20} color="#22c55e" />
+              <label>Nursing Timer</label>
+            </div>
+
+            {/* Current Timer Display */}
+            <div style={styles.timerDisplay}>
+              <div style={styles.currentTimer}>
+                <span style={styles.timerTime}>0M</span>
+                <span style={styles.timerLabel}>Current Side</span>
+              </div>
+              <div style={styles.totalTimer}>
+                <span style={styles.timerTime}>0M 00S</span>
+                <span style={styles.timerLabel}>Total Time</span>
+              </div>
+            </div>
+
+            {/* Side Buttons */}
+            <div style={styles.sideButtonContainer}>
+              <button style={styles.sideButton}>
+                <span style={styles.sideButtonText}>Start Left</span>
+              </button>
+              <button style={styles.sideButton}>
+                <span style={styles.sideButtonText}>Start Right</span>
+              </button>
+            </div>
+
+            {/* Last Side Indicator */}
+            <div style={styles.lastSideIndicator}>
+              <span style={styles.lastSideText}>Last Side: Left</span>
+            </div>
+          </div>
+
+          {/* Notes Section - same as bottle */}
+          <div style={styles.formSection}>
+            <div style={styles.formLabel}>
+              <label>Notes (optional)</label>
+            </div>
+            <textarea
+              placeholder="Any additional notes..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                resize: 'none',
+                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={styles.actionButtons}>
+            <div style={styles.buttonContainer}>
+              <button
+                onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
+                disabled={loading}
+                style={{
+                  ...styles.primaryBtn,
+                  opacity: loading ? 0.6 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <Check size={20} />
+                <span>{loading ? (editingFeeding ? 'Updating...' : 'Saving...') : (editingFeeding ? 'Update Feeding' : 'Save Feeding')}</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   </div>
 ));
@@ -226,6 +373,9 @@ const FeedMeApp = () => {
   
   // DateTime picker state
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
+  
+  // Feeding mode state (nursing or bottle)
+  const [feedingMode, setFeedingMode] = useState('bottle');
   
   // Calculate baby's age in weeks from birth date
   const babyAgeWeeks = selectedBaby?.birth_date ? 
@@ -1176,6 +1326,31 @@ const FeedMeApp = () => {
       gap: '2rem',
       paddingBottom: '6rem'
     },
+    toggleContainer: {
+      display: 'flex',
+      backgroundColor: '#f3f4f6',
+      borderRadius: '8px',
+      padding: '4px',
+      marginBottom: '1rem'
+    },
+    toggleButton: {
+      flex: 1,
+      padding: '12px 16px',
+      border: 'none',
+      borderRadius: '6px',
+      fontSize: '16px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    },
+    toggleButtonActive: {
+      backgroundColor: '#22c55e',
+      color: 'white'
+    },
+    toggleButtonInactive: {
+      backgroundColor: 'transparent',
+      color: '#6b7280'
+    },
     formSection: {
       display: 'flex',
       flexDirection: 'column'
@@ -1389,6 +1564,77 @@ const FeedMeApp = () => {
       backgroundColor: '#8b5cf6',
       color: 'white',
       borderColor: '#8b5cf6'
+    },
+    // Nursing Timer Styles
+    timerDisplay: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '1.5rem',
+      gap: '1rem'
+    },
+    currentTimer: {
+      flex: 1,
+      textAlign: 'center',
+      backgroundColor: '#f0f9ff',
+      padding: '1rem',
+      borderRadius: '8px',
+      border: '2px solid #0ea5e9'
+    },
+    totalTimer: {
+      flex: 1,
+      textAlign: 'center',
+      backgroundColor: '#f0fdf4',
+      padding: '1rem',
+      borderRadius: '8px',
+      border: '2px solid #22c55e'
+    },
+    timerTime: {
+      display: 'block',
+      fontSize: '24px',
+      fontWeight: '700',
+      color: '#1f2937',
+      marginBottom: '4px'
+    },
+    timerLabel: {
+      display: 'block',
+      fontSize: '12px',
+      color: '#6b7280',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
+    },
+    sideButtonContainer: {
+      display: 'flex',
+      gap: '1rem',
+      marginBottom: '1rem'
+    },
+    sideButton: {
+      flex: 1,
+      padding: '2rem 1rem',
+      backgroundColor: 'white',
+      border: '2px solid #e5e7eb',
+      borderRadius: '50%',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      minHeight: '120px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    sideButtonText: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#374151'
+    },
+    lastSideIndicator: {
+      textAlign: 'center',
+      padding: '0.5rem',
+      backgroundColor: '#f3f4f6',
+      borderRadius: '6px'
+    },
+    lastSideText: {
+      fontSize: '14px',
+      color: '#6b7280',
+      fontWeight: '500'
     }
   };
 
@@ -1958,6 +2204,8 @@ const FeedMeApp = () => {
           presetOunces={presetOunces}
           getLocalDateString={getLocalDateString}
           setShowDateTimePicker={setShowDateTimePicker}
+          feedingMode={feedingMode}
+          setFeedingMode={setFeedingMode}
         />
       ) : currentScreen === 'addSleep' ? (
         <div style={{padding: '2rem', textAlign: 'center'}}>
