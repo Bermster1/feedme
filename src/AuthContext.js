@@ -20,10 +20,14 @@ export const AuthProvider = ({ children }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('AuthContext: Getting initial session...')
         const currentUser = await authService.getCurrentUser()
+        console.log('AuthContext: Initial user:', currentUser)
         setUser(currentUser)
       } catch (error) {
         console.error('Error getting initial session:', error)
+        // In incognito mode, initial session may fail but auth state change will work
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -34,7 +38,7 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = authService.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session)
+        console.log('AuthContext: Auth state changed:', event, session?.user?.email || 'no user')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)

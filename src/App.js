@@ -114,7 +114,11 @@ const AppContent = () => {
     selectedBaby,
     families: families?.length,
     babies: babies?.length,
-    user: user?.email 
+    user: user?.email,
+    inviteToken: inviteToken ? 'present' : 'none',
+    inviteProcessing,
+    loading,
+    loadingTimeout
   });
 
   if (loading || familiesLoading) {

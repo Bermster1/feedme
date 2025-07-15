@@ -4,6 +4,9 @@ export const authService = {
   // Send magic link to email
   async signInWithMagicLink(email) {
     try {
+      console.log('AuthService: Sending magic link to:', email)
+      console.log('AuthService: Redirect URL:', window.location.origin)
+      
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -12,9 +15,10 @@ export const authService = {
       })
       
       if (error) throw error
+      console.log('AuthService: Magic link sent successfully')
       return data
     } catch (error) {
-      console.error('Error sending magic link:', error)
+      console.error('AuthService: Error sending magic link:', error)
       throw error
     }
   },
@@ -22,10 +26,12 @@ export const authService = {
   // Get current user
   async getCurrentUser() {
     try {
+      console.log('AuthService: Getting current user...')
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('AuthService: Current user:', user?.email || 'no user')
       return user
     } catch (error) {
-      console.error('Error getting current user:', error)
+      console.error('AuthService: Error getting current user:', error)
       return null
     }
   },
