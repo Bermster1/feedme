@@ -9,7 +9,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   const [selectedHour, setSelectedHour] = useState(() => {
     const now = new Date();
     let hour = now.getHours();
-    return hour > 12 ? hour - 12 : hour || 12;
+    return hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
   });
   const [selectedMinute, setSelectedMinute] = useState(() => new Date().getMinutes());
   const [selectedPeriod, setSelectedPeriod] = useState(() => new Date().getHours() >= 12 ? 'PM' : 'AM');
@@ -26,7 +26,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
 
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
   const minutes = Array.from({ length: 60 }, (_, i) => i); // Every minute 0-59
-  const periods = ['AM', 'PM'];
+  const periods = ['AM', 'PM', 'AM', 'PM', 'AM', 'PM']; // Repeat for better scrolling experience
 
   // Generate date options like native iOS (Today, specific dates, etc.)
   const generateDateOptions = () => {
@@ -57,10 +57,12 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   const dateOptions = generateDateOptions();
   
   // Debug logging
-  console.log('ProperIOSPicker NATIVE_IOS_V2 loaded:', {
+  console.log('ProperIOSPicker NATIVE_IOS_V3_FIXED loaded:', {
     dateOptions: dateOptions.length,
     minutes: minutes.length,
-    hours: hours.length
+    hours: hours.length,
+    periods: periods.length,
+    timestamp: new Date().toISOString()
   });
 
   const handleSave = () => {
@@ -137,7 +139,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       height: '100%',
       position: 'relative',
       overflow: 'hidden',
-      marginRight: '8px'
+      marginRight: '4px'
     },
     dateColumn: {
       flex: 2.5, // Wider for date text
@@ -180,22 +182,23 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       transition: 'all 0.1s ease'
     },
     wheelItemSelected: {
-      color: '#000',
+      color: '#000000', // Black text for selected items like native iOS
       fontWeight: '600', // Bolder for selected items
       fontSize: '23px'
     },
     selectionOverlay: {
       position: 'absolute',
       top: '50%',
-      left: '0',
-      right: '0',
+      left: '8px',
+      right: '8px',
       height: '40px',
       marginTop: '-20px',
       borderTop: '1px solid #c6c6c8',
       borderBottom: '1px solid #c6c6c8',
       pointerEvents: 'none',
       zIndex: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)'
+      backgroundColor: 'rgba(34, 197, 94, 0.1)', // Light green background for selection area
+      borderRadius: '8px'
     }
   };
 
@@ -204,10 +207,17 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const isScrolling = useRef(false);
     const scrollTimeout = useRef(null);
     const isInitialized = useRef(false);
+    
+    // For arrays with few items (like AM/PM), create repeating items for better scroll experience
+    const minItemsForScroll = 12;
+    const scrollItems = items.length < minItemsForScroll ? 
+      Array.from({ length: minItemsForScroll }, (_, i) => items[i % items.length]) : 
+      items;
 
     useEffect(() => {
       if (scrollerRef.current && !isScrolling.current) {
-        const selectedIndex = items.findIndex(item => item === selectedValue);
+        // Find the first occurrence of the selected value in scrollItems
+        const selectedIndex = scrollItems.findIndex(item => item === selectedValue);
         if (selectedIndex >= 0) {
           const scrollTop = selectedIndex * 40;
           if (isInitialized.current) {
@@ -222,7 +232,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           }
         }
       }
-    }, [selectedValue, items]);
+    }, [selectedValue, scrollItems]);
 
     const handleScroll = (e) => {
       e.preventDefault();
@@ -238,7 +248,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 40;
           const centerIndex = Math.round(scrollTop / itemHeight);
-          const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
+          const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
           
           // Snap to center
           const targetScrollTop = clampedIndex * itemHeight;
@@ -247,8 +257,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
             behavior: 'smooth'
           });
           
-          if (items[clampedIndex] !== selectedValue) {
-            onChange(items[clampedIndex]);
+          if (scrollItems[clampedIndex] !== selectedValue) {
+            onChange(scrollItems[clampedIndex]);
           }
         }
       }, 100);
@@ -272,7 +282,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 40;
           const centerIndex = Math.round(scrollTop / itemHeight);
-          const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
+          const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
           const targetScrollTop = clampedIndex * itemHeight;
           
           scrollerRef.current.scrollTo({
@@ -280,8 +290,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
             behavior: 'smooth'
           });
           
-          if (items[clampedIndex] !== selectedValue) {
-            onChange(items[clampedIndex]);
+          if (scrollItems[clampedIndex] !== selectedValue) {
+            onChange(scrollItems[clampedIndex]);
           }
         }
       }, 150);
@@ -309,9 +319,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           onMouseDown={handleTouchStart}
           onMouseUp={handleTouchEnd}
         >
-          {items.map((item, index) => (
+          {scrollItems.map((item, index) => (
             <div 
-              key={item} 
+              key={`${item}-${index}`} 
               style={getItemStyle(item, index)}
               onClick={() => {
                 onChange(item);
