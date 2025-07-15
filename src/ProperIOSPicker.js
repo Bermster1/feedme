@@ -30,8 +30,14 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     } else if (isOpen) {
       // Reset to current time when opening without initialDateTime
       const now = new Date();
-      const currentPeriod = now.getHours() >= 12 ? 'PM' : 'AM';
-      console.log('Resetting to current time:', { hour: now.getHours(), period: currentPeriod });
+      let hour = now.getHours();
+      const minute = now.getMinutes();
+      const currentPeriod = hour >= 12 ? 'PM' : 'AM';
+      hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      
+      console.log('Resetting to current time:', { hour, minute, period: currentPeriod });
+      setSelectedHour(hour);
+      setSelectedMinute(minute);
       setSelectedPeriod(currentPeriod);
     }
   }, [initialDateTime, isOpen]);
@@ -242,9 +248,10 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         if (selectedIndex >= 0) {
           // For non-duplicated items (like AM/PM), we need to account for the padding
           // The green bar is at 90px (50% of 180px container), padding starts at 78px
-          // So we need to offset by 90px - 78px = 12px to center items in the green bar
+          // Items start at 78px, so first item center is at 78px + 12px = 90px (perfect!)
+          // No offset needed - the padding already centers the first item correctly
           const needsPaddingOffset = scrollItems.length === items.length; // No duplication
-          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          const paddingOffset = 0; // Remove offset - padding already handles centering
           const scrollTop = (selectedIndex * 24) - paddingOffset;
           
           if (isInitialized.current) {
@@ -279,7 +286,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 24; // Updated for new item height
           const needsPaddingOffset = scrollItems.length === items.length; // No duplication
-          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          const paddingOffset = 0; // Remove offset - padding already handles centering
           
           const centerIndex = Math.round((scrollTop + paddingOffset) / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
@@ -317,7 +324,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 24; // Updated for new item height
           const needsPaddingOffset = scrollItems.length === items.length; // No duplication
-          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          const paddingOffset = 0; // Remove offset - padding already handles centering
           
           const centerIndex = Math.round((scrollTop + paddingOffset) / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
