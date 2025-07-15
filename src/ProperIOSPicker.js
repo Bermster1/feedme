@@ -10,7 +10,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   // Initialize with provided date/time
   useEffect(() => {
     if (initialDateTime && isOpen) {
-      const [year, month, day] = initialDateTime.date.split('-').map(Number);
+      const [, month, day] = initialDateTime.date.split('-').map(Number);
       setSelectedMonth(month - 1);
       setSelectedDay(day);
       setSelectedHour(initialDateTime.time.hour);
@@ -53,51 +53,56 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       alignItems: 'flex-end'
     },
     modal: {
-      backgroundColor: '#f0f0f0',
-      borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px',
+      backgroundColor: '#f8f9fa',
+      borderTopLeftRadius: '16px',
+      borderTopRightRadius: '16px',
       width: '100%',
-      paddingBottom: 'env(safe-area-inset-bottom)'
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      maxHeight: '70vh'
     },
     header: {
-      backgroundColor: 'white',
-      padding: '1rem',
-      borderTopLeftRadius: '12px',
-      borderTopRightRadius: '12px',
-      borderBottom: '1px solid #e0e0e0',
+      backgroundColor: '#f8f9fa',
+      padding: '1rem 1.5rem',
+      borderTopLeftRadius: '16px',
+      borderTopRightRadius: '16px',
+      borderBottom: '1px solid #e5e5e7',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center'
     },
     cancelButton: {
       color: '#007AFF',
-      fontSize: '1rem',
+      fontSize: '17px',
       fontWeight: '400',
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      padding: '0.5rem'
+      padding: '8px 0',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
     },
     saveButton: {
       color: '#007AFF',
-      fontSize: '1rem',
+      fontSize: '17px',
       fontWeight: '600',
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      padding: '0.5rem'
+      padding: '8px 0',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
     },
     title: {
-      fontSize: '1rem',
+      fontSize: '17px',
       fontWeight: '600',
-      color: '#000'
+      color: '#000',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
     },
     pickerContainer: {
-      height: '200px',
-      backgroundColor: '#f0f0f0',
+      height: '260px',
+      backgroundColor: '#f8f9fa',
       display: 'flex',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      padding: '0 20px'
     },
     wheelColumn: {
       flex: 1,
@@ -107,64 +112,90 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     },
     wheelScroller: {
       height: '100%',
-      overflowY: 'auto',
+      overflowY: 'scroll',
       scrollSnapType: 'y mandatory',
-      paddingTop: '80px',
-      paddingBottom: '80px',
+      paddingTop: '110px',
+      paddingBottom: '110px',
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
-      WebkitScrollbar: { display: 'none' }
+      WebkitOverflowScrolling: 'touch'
     },
     wheelItem: {
       height: '40px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: '1.25rem',
-      color: '#333',
+      fontSize: '23px',
+      color: '#8e8e93',
       scrollSnapAlign: 'center',
       cursor: 'pointer',
-      userSelect: 'none'
+      userSelect: 'none',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+      fontWeight: '400',
+      transition: 'all 0.1s ease'
     },
-    selectedIndicator: {
+    wheelItemSelected: {
+      color: '#000',
+      fontWeight: '400',
+      fontSize: '23px'
+    },
+    selectionOverlay: {
       position: 'absolute',
       top: '50%',
-      left: '4px',
-      right: '4px',
+      left: '0',
+      right: '0',
       height: '40px',
       marginTop: '-20px',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderRadius: '8px',
-      border: '1px solid rgba(0, 0, 0, 0.1)',
+      borderTop: '1px solid #c6c6c8',
+      borderBottom: '1px solid #c6c6c8',
       pointerEvents: 'none',
-      zIndex: 1
+      zIndex: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)'
     }
   };
 
   const WheelColumn = ({ items, selectedValue, onChange, formatter = (x) => x }) => {
     const scrollerRef = useRef(null);
     const isScrolling = useRef(false);
+    const scrollTimeout = useRef(null);
 
     useEffect(() => {
       if (scrollerRef.current && !isScrolling.current) {
         const selectedIndex = items.findIndex(item => item === selectedValue);
         if (selectedIndex >= 0) {
-          scrollerRef.current.scrollTop = selectedIndex * 40;
+          const scrollTop = selectedIndex * 40;
+          scrollerRef.current.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
         }
       }
     }, [selectedValue, items]);
 
     const handleScroll = () => {
-      if (!isScrolling.current) return;
-      
-      const scrollTop = scrollerRef.current.scrollTop;
-      const itemHeight = 40;
-      const selectedIndex = Math.round(scrollTop / itemHeight);
-      const clampedIndex = Math.max(0, Math.min(items.length - 1, selectedIndex));
-      
-      if (items[clampedIndex] !== selectedValue) {
-        onChange(items[clampedIndex]);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
       }
+      
+      scrollTimeout.current = setTimeout(() => {
+        if (scrollerRef.current) {
+          const scrollTop = scrollerRef.current.scrollTop;
+          const itemHeight = 40;
+          const centerIndex = Math.round(scrollTop / itemHeight);
+          const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
+          
+          // Snap to center
+          const targetScrollTop = clampedIndex * itemHeight;
+          scrollerRef.current.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+          
+          if (items[clampedIndex] !== selectedValue) {
+            onChange(items[clampedIndex]);
+          }
+        }
+      }, 100);
     };
 
     const handleTouchStart = () => {
@@ -174,15 +205,24 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const handleTouchEnd = () => {
       setTimeout(() => {
         isScrolling.current = false;
-        handleScroll();
-      }, 100);
+      }, 150);
+    };
+
+    // Add visual feedback for wheel items based on their distance from center
+    const getItemStyle = (item, index) => {
+      const isSelected = item === selectedValue;
+      return {
+        ...styles.wheelItem,
+        ...(isSelected ? styles.wheelItemSelected : {})
+      };
     };
 
     return (
       <div style={styles.wheelColumn}>
-        <div style={styles.selectedIndicator}></div>
+        <div style={styles.selectionOverlay}></div>
         <div 
           ref={scrollerRef}
+          className="ios-wheel-scroller"
           style={styles.wheelScroller}
           onScroll={handleScroll}
           onTouchStart={handleTouchStart}
@@ -190,8 +230,14 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           onMouseDown={handleTouchStart}
           onMouseUp={handleTouchEnd}
         >
-          {items.map((item) => (
-            <div key={item} style={styles.wheelItem}>
+          {items.map((item, index) => (
+            <div 
+              key={item} 
+              style={getItemStyle(item, index)}
+              onClick={() => {
+                onChange(item);
+              }}
+            >
               {formatter(item)}
             </div>
           ))}
@@ -203,56 +249,67 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   if (!isOpen) return null;
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.header}>
-          <button style={styles.cancelButton} onClick={onClose}>
-            Cancel
-          </button>
-          <div style={styles.title}>{title}</div>
-          <button style={styles.saveButton} onClick={handleSave}>
-            Save
-          </button>
-        </div>
+    <>
+      <style>{`
+        .ios-wheel-scroller::-webkit-scrollbar {
+          display: none;
+        }
+        .ios-wheel-scroller {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div style={styles.overlay} onClick={onClose}>
+        <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.header}>
+            <button style={styles.cancelButton} onClick={onClose}>
+              Cancel
+            </button>
+            <div style={styles.title}>{title}</div>
+            <button style={styles.saveButton} onClick={handleSave}>
+              Save
+            </button>
+          </div>
 
-        <div style={styles.pickerContainer}>
-          <WheelColumn
-            items={months}
-            selectedValue={months[selectedMonth]}
-            onChange={(month) => {
-              const newMonthIndex = months.indexOf(month);
-              setSelectedMonth(newMonthIndex);
-              // Adjust day if it doesn't exist in new month
-              const maxDays = getDaysInMonth(newMonthIndex);
-              if (selectedDay > maxDays) {
-                setSelectedDay(maxDays);
-              }
-            }}
-          />
-          <WheelColumn
-            items={days}
-            selectedValue={selectedDay}
-            onChange={setSelectedDay}
-          />
-          <WheelColumn
-            items={hours}
-            selectedValue={selectedHour}
-            onChange={setSelectedHour}
-          />
-          <WheelColumn
-            items={minutes}
-            selectedValue={selectedMinute}
-            onChange={setSelectedMinute}
-            formatter={(min) => min.toString().padStart(2, '0')}
-          />
-          <WheelColumn
-            items={periods}
-            selectedValue={selectedPeriod}
-            onChange={setSelectedPeriod}
-          />
+          <div style={styles.pickerContainer}>
+            <WheelColumn
+              items={months}
+              selectedValue={months[selectedMonth]}
+              onChange={(month) => {
+                const newMonthIndex = months.indexOf(month);
+                setSelectedMonth(newMonthIndex);
+                // Adjust day if it doesn't exist in new month
+                const maxDays = getDaysInMonth(newMonthIndex);
+                if (selectedDay > maxDays) {
+                  setSelectedDay(maxDays);
+                }
+              }}
+            />
+            <WheelColumn
+              items={days}
+              selectedValue={selectedDay}
+              onChange={setSelectedDay}
+            />
+            <WheelColumn
+              items={hours}
+              selectedValue={selectedHour}
+              onChange={setSelectedHour}
+            />
+            <WheelColumn
+              items={minutes}
+              selectedValue={selectedMinute}
+              onChange={setSelectedMinute}
+              formatter={(min) => min.toString().padStart(2, '0')}
+            />
+            <WheelColumn
+              items={periods}
+              selectedValue={selectedPeriod}
+              onChange={setSelectedPeriod}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
