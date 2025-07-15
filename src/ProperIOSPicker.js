@@ -27,7 +27,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       setSelectedHour(initialDateTime.time.hour);
       setSelectedMinute(initialDateTime.time.minute);
       setSelectedPeriod(initialDateTime.time.period);
-    } else if (isOpen) {
+    } else if (isOpen && !initialDateTime) {
       // Reset to current time when opening without initialDateTime
       const now = new Date();
       let hour = now.getHours();
@@ -35,10 +35,20 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       const currentPeriod = hour >= 12 ? 'PM' : 'AM';
       hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
       
-      console.log('Resetting to current time:', { hour, minute, period: currentPeriod });
+      console.log('Setting to current time - no initialDateTime:', { 
+        rawHour: now.getHours(), 
+        hour, 
+        minute, 
+        period: currentPeriod 
+      });
       setSelectedHour(hour);
       setSelectedMinute(minute);
       setSelectedPeriod(currentPeriod);
+      
+      // Also update the date to today
+      const today = new Date();
+      const todayString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+      setSelectedDate(todayString);
     }
   }, [initialDateTime, isOpen]);
 
@@ -178,8 +188,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       height: '100%',
       overflowY: 'scroll',
       scrollSnapType: 'y mandatory',
-      paddingTop: '78px', // 78px + 12px (half item) = 90px (center of 180px container)
-      paddingBottom: '78px', // 78px + 12px (half item) = 90px (center of 180px container)
+      paddingTop: '78px', // Centers first item: 78px (padding) + 12px (half of 24px item) = 90px 
+      paddingBottom: '78px', // Same padding for symmetry
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       WebkitOverflowScrolling: 'touch',
@@ -213,7 +223,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       left: '-20px', // Extend beyond container padding
       right: '-20px', // Extend beyond container padding  
       height: '24px', // Match item height exactly
-      marginTop: '-12px', // Half of height
+      marginTop: '0px', // No margin - center at exactly 90px (50% of 180px)
       borderTop: '1px solid #c6c6c8',
       borderBottom: '1px solid #c6c6c8',
       pointerEvents: 'none',
@@ -248,10 +258,11 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         if (selectedIndex >= 0) {
           // For non-duplicated items (like AM/PM), we need to account for the padding
           // The green bar is at 90px (50% of 180px container), padding starts at 78px
-          // Items start at 78px, so first item center is at 78px + 12px = 90px (perfect!)
-          // No offset needed - the padding already centers the first item correctly
+          // First item appears at 78px, but item center is at 78px + 12px = 90px
+          // For scrolling: item 0 should scroll to position 0 to center in green bar at 90px
+          // But due to padding, we need no offset for proper centering
           const needsPaddingOffset = scrollItems.length === items.length; // No duplication
-          const paddingOffset = 0; // Remove offset - padding already handles centering
+          const paddingOffset = 0;
           const scrollTop = (selectedIndex * 24) - paddingOffset;
           
           if (isInitialized.current) {
