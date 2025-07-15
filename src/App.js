@@ -13,6 +13,7 @@ const AppContent = () => {
   const { needsSetup, createFirstFamilyAndBaby, loading: familiesLoading, error: familiesError, selectedBaby, families, babies, loadData } = useFamilies();
   const [inviteToken, setInviteToken] = useState(null);
   const [inviteProcessing, setInviteProcessing] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // Check for invitation token in URL on load
   useEffect(() => {
@@ -21,20 +22,37 @@ const AppContent = () => {
     if (inviteParam) {
       console.log('Found invitation token in URL:', inviteParam);
       setInviteToken(inviteParam);
-      // Store in sessionStorage so it persists through magic link redirect
-      sessionStorage.setItem('pendingInvitation', inviteParam);
-      // Clean URL after extracting token
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
+      // Try to store in sessionStorage but don't fail if unavailable (incognito mode)
+      try {
+        sessionStorage.setItem('pendingInvitation', inviteParam);
+      } catch (error) {
+        console.warn('SessionStorage not available (incognito mode?), keeping token in URL');
+      }
+      // Keep URL clean but don't remove token yet - we'll do that after processing
     } else {
       // Check if we have a pending invitation from sessionStorage
-      const pendingInvite = sessionStorage.getItem('pendingInvitation');
-      if (pendingInvite) {
-        console.log('Found pending invitation in sessionStorage:', pendingInvite);
-        setInviteToken(pendingInvite);
+      try {
+        const pendingInvite = sessionStorage.getItem('pendingInvitation');
+        if (pendingInvite) {
+          console.log('Found pending invitation in sessionStorage:', pendingInvite);
+          setInviteToken(pendingInvite);
+        }
+      } catch (error) {
+        console.warn('SessionStorage not available, will rely on URL token');
       }
     }
   }, []);
+
+  // Add loading timeout to prevent infinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading || familiesLoading) {
+        setLoadingTimeout(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timer);
+  }, [loading, familiesLoading]);
 
   // Process invitation after user is authenticated (don't wait for families to load)
   useEffect(() => {
@@ -47,8 +65,15 @@ const AppContent = () => {
           const result = await familyService.joinFamilyWithInvitation(inviteToken);
           if (result.success) {
             console.log('Successfully joined family via invitation');
-            // Clear the pending invitation from sessionStorage
-            sessionStorage.removeItem('pendingInvitation');
+            // Clear the pending invitation from sessionStorage (if available)
+            try {
+              sessionStorage.removeItem('pendingInvitation');
+            } catch (error) {
+              console.warn('SessionStorage not available for cleanup');
+            }
+            // Clean up URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
             // Refresh families to show the new family
             if (loadData) {
               await loadData();
@@ -62,7 +87,14 @@ const AppContent = () => {
           setInviteToken(null);
           setInviteProcessing(false);
           // Clean up sessionStorage on any completion (success or error)
-          sessionStorage.removeItem('pendingInvitation');
+          try {
+            sessionStorage.removeItem('pendingInvitation');
+          } catch (error) {
+            console.warn('SessionStorage not available for cleanup');
+          }
+          // Clean up URL
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
         }
       }
     };
@@ -89,13 +121,42 @@ const AppContent = () => {
     return (
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
         fontSize: '1rem',
-        color: '#6b7280'
+        color: '#6b7280',
+        textAlign: 'center',
+        padding: '2rem'
       }}>
-        Loading...
+        <div>Loading...</div>
+        {loadingTimeout && (
+          <div style={{
+            marginTop: '1rem',
+            color: '#dc2626',
+            fontSize: '0.875rem'
+          }}>
+            <div>Loading is taking longer than expected.</div>
+            <div style={{marginTop: '0.5rem'}}>
+              This might be due to incognito mode storage restrictions.
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
       </div>
     );
   }

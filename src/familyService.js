@@ -130,7 +130,8 @@ export const familyService = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Generate a unique invitation token
+      // Generate a unique invitation token with family ID embedded
+      // Format: inv_timestamp_familyId_randomPart
       let randomPart
       try {
         randomPart = Math.random().toString(36).substring(2, 11)
@@ -138,7 +139,7 @@ export const familyService = {
         console.warn('Math.random() error, using fallback:', randomError)
         randomPart = Date.now().toString().slice(-6) // Fallback to timestamp
       }
-      const inviteToken = `inv_${Date.now()}_${randomPart}`
+      const inviteToken = `inv_${Date.now()}_${familyId}_${randomPart}`
       console.log('Generated token:', inviteToken)
       
       // Store invitation in localStorage for now (in production, this would be in database)
@@ -186,29 +187,65 @@ export const familyService = {
   // Validate and get invitation data from token
   async getInvitationData(inviteToken) {
     try {
-      // Get invitations from localStorage (in production, this would be from database)
+      // First, try to get from localStorage
       let existingInvites = []
       try {
         if (typeof Storage !== 'undefined' && localStorage) {
           existingInvites = JSON.parse(localStorage.getItem('family_invitations') || '[]')
         }
       } catch (storageError) {
-        console.warn('localStorage read error:', storageError)
+        console.warn('localStorage read error (incognito mode?):', storageError)
         existingInvites = []
       }
       
       const invitation = existingInvites.find(inv => inv.token === inviteToken)
       
-      if (!invitation) {
-        throw new Error('Invalid invitation token')
+      if (invitation) {
+        // Check if invitation has expired
+        if (new Date() > new Date(invitation.expires_at)) {
+          throw new Error('Invitation has expired')
+        }
+        return invitation
       }
       
-      // Check if invitation has expired
-      if (new Date() > new Date(invitation.expires_at)) {
-        throw new Error('Invitation has expired')
+      // Fallback: Parse family ID from token format inv_timestamp_familyId_randomPart
+      // This allows invitations to work even when localStorage is unavailable
+      console.warn('Invitation not found in localStorage, attempting to parse token directly')
+      
+      const tokenParts = inviteToken.split('_')
+      if (tokenParts.length >= 4 && tokenParts[0] === 'inv') {
+        // New format: inv_timestamp_familyId_randomPart
+        const timestamp = parseInt(tokenParts[1])
+        const familyId = tokenParts[2]
+        
+        // Check if token is not too old (7 days)
+        const tokenAge = Date.now() - timestamp
+        const maxAge = 7 * 24 * 60 * 60 * 1000 // 7 days
+        
+        if (tokenAge > maxAge) {
+          throw new Error('Invitation has expired')
+        }
+        
+        // Verify family exists
+        const { data: family, error } = await supabase
+          .from('families')
+          .select('id, name')
+          .eq('id', familyId)
+          .single()
+        
+        if (error || !family) {
+          throw new Error('Invalid invitation: family not found')
+        }
+        
+        return {
+          token: inviteToken,
+          family_id: familyId,
+          expires_at: new Date(timestamp + maxAge).toISOString(),
+          created_at: new Date(timestamp).toISOString()
+        }
       }
       
-      return invitation
+      throw new Error('Invalid invitation token format')
     } catch (error) {
       console.error('Error validating invitation:', error)
       throw error
