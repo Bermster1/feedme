@@ -168,10 +168,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       isolation: 'isolate',
       contain: 'layout style', // Strict containment to prevent interference
       transform: 'translateZ(0)', // Force hardware acceleration and isolation
-      willChange: 'scroll-position', // Optimize for scrolling
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center' // Center items vertically
+      willChange: 'scroll-position' // Optimize for scrolling
     },
     wheelItem: {
       height: '24px', // Much smaller height for tighter spacing
@@ -195,8 +192,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     selectionOverlay: {
       position: 'absolute',
       top: '50%',
-      left: '0', // Start from container edge
-      right: '0', // End at container edge
+      left: '-20px', // Extend beyond container padding
+      right: '-20px', // Extend beyond container padding  
       height: '24px', // Match item height exactly
       marginTop: '-12px', // Half of height
       borderTop: '1px solid #c6c6c8',
