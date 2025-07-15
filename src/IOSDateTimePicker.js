@@ -33,7 +33,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
   const dateOptions = generateDateOptions();
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = Array.from({ length: 60 }, (_, i) => i); // Full 60 minutes
+  const minutes = Array.from({ length: 60 }, (_, i) => i); // All 60 minutes
   const periods = ['AM', 'PM'];
 
   // Initialize picker values
@@ -158,13 +158,14 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         }
         
         .ios-picker-container {
-          height: 192px;
+          height: 168px;
           background-color: #f8f9fa;
           position: relative;
+          overflow: hidden;
         }
         
         .ios-picker-item {
-          height: 28px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -194,8 +195,8 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
           top: 50%;
           left: 0;
           right: 0;
-          height: 28px;
-          margin-top: -14px;
+          height: 24px;
+          margin-top: -12px;
           border-top: 1px solid #c6c6c8;
           border-bottom: 1px solid #c6c6c8;
           background-color: rgba(34, 197, 94, 0.08);
@@ -221,8 +222,8 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
             <Picker
               value={pickerValue}
               onChange={setPickerValue}
-              height={192}
-              itemHeight={28}
+              height={168}
+              itemHeight={24}
               wheelMode="natural"
             >
               <Picker.Column name="date">
