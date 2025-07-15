@@ -160,7 +160,10 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       WebkitOverflowScrolling: 'touch',
-      isolation: 'isolate' // Prevent scroll interference between columns
+      isolation: 'isolate',
+      contain: 'layout style', // Strict containment to prevent interference
+      transform: 'translateZ(0)', // Force hardware acceleration and isolation
+      willChange: 'scroll-position' // Optimize for scrolling
     },
     wheelItem: {
       height: '40px',
@@ -200,59 +203,87 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const scrollerRef = useRef(null);
     const isScrolling = useRef(false);
     const scrollTimeout = useRef(null);
+    const isInitialized = useRef(false);
 
     useEffect(() => {
       if (scrollerRef.current && !isScrolling.current) {
         const selectedIndex = items.findIndex(item => item === selectedValue);
         if (selectedIndex >= 0) {
           const scrollTop = selectedIndex * 40;
-          scrollerRef.current.scrollTo({
-            top: scrollTop,
-            behavior: 'smooth'
-          });
+          if (isInitialized.current) {
+            scrollerRef.current.scrollTo({
+              top: scrollTop,
+              behavior: 'smooth'
+            });
+          } else {
+            // Initial position without animation
+            scrollerRef.current.scrollTop = scrollTop;
+            isInitialized.current = true;
+          }
         }
       }
     }, [selectedValue, items]);
 
     const handleScroll = (e) => {
-      e.stopPropagation(); // Prevent scroll events from bubbling to other columns
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
       
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
       
       scrollTimeout.current = setTimeout(() => {
-        if (scrollerRef.current) {
+        if (scrollerRef.current && !isScrolling.current) {
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 40;
           const centerIndex = Math.round(scrollTop / itemHeight);
           const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
           
-          // Only snap if user has stopped scrolling
-          if (!isScrolling.current) {
-            const targetScrollTop = clampedIndex * itemHeight;
-            scrollerRef.current.scrollTo({
-              top: targetScrollTop,
-              behavior: 'smooth'
-            });
-          }
+          // Snap to center
+          const targetScrollTop = clampedIndex * itemHeight;
+          scrollerRef.current.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
           
           if (items[clampedIndex] !== selectedValue) {
             onChange(items[clampedIndex]);
           }
         }
-      }, 50);
+      }, 100);
     };
 
     const handleTouchStart = (e) => {
+      e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       isScrolling.current = true;
     };
 
     const handleTouchEnd = (e) => {
+      e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       setTimeout(() => {
         isScrolling.current = false;
+        // Trigger final snap after touch ends
+        if (scrollerRef.current) {
+          const scrollTop = scrollerRef.current.scrollTop;
+          const itemHeight = 40;
+          const centerIndex = Math.round(scrollTop / itemHeight);
+          const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
+          const targetScrollTop = clampedIndex * itemHeight;
+          
+          scrollerRef.current.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+          
+          if (items[clampedIndex] !== selectedValue) {
+            onChange(items[clampedIndex]);
+          }
+        }
       }, 150);
     };
 
