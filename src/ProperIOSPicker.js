@@ -172,8 +172,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       height: '100%',
       overflowY: 'scroll',
       scrollSnapType: 'y mandatory',
-      paddingTop: '78px', // Centered padding
-      paddingBottom: '78px', // Centered padding
+      paddingTop: '78px', // 78px + 12px (half item) = 90px (center of 180px container)
+      paddingBottom: '78px', // 78px + 12px (half item) = 90px (center of 180px container)
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       WebkitOverflowScrolling: 'touch',
@@ -223,9 +223,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const scrollTimeout = useRef(null);
     const isInitialized = useRef(false);
     
-    // Create proper scrollable items with padding for small arrays only
-    const scrollItems = items.length <= 12 ? 
-      // For small arrays (AM/PM, hours), add padding items for proper scrolling
+    // Create proper scrollable items - only duplicate hours (12 items), not AM/PM (2 items)
+    const scrollItems = items.length === 12 ? 
+      // For hours only, add padding items for proper scrolling
       [...items, ...items, ...items, ...items, ...items] :
       items;
 
@@ -240,7 +240,13 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         });
         
         if (selectedIndex >= 0) {
-          const scrollTop = selectedIndex * 24; // Updated for new item height
+          // For non-duplicated items (like AM/PM), we need to account for the padding
+          // The green bar is at 90px (50% of 180px container), padding starts at 78px
+          // So we need to offset by 90px - 78px = 12px to center items in the green bar
+          const needsPaddingOffset = scrollItems.length === items.length; // No duplication
+          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          const scrollTop = (selectedIndex * 24) - paddingOffset;
+          
           if (isInitialized.current) {
             scrollerRef.current.scrollTo({
               top: scrollTop,
@@ -272,11 +278,14 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         if (scrollerRef.current && !isScrolling.current) {
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 24; // Updated for new item height
-          const centerIndex = Math.round(scrollTop / itemHeight);
+          const needsPaddingOffset = scrollItems.length === items.length; // No duplication
+          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          
+          const centerIndex = Math.round((scrollTop + paddingOffset) / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
           
           // Snap to center
-          const targetScrollTop = clampedIndex * itemHeight;
+          const targetScrollTop = (clampedIndex * itemHeight) - paddingOffset;
           scrollerRef.current.scrollTo({
             top: targetScrollTop,
             behavior: 'smooth'
@@ -307,9 +316,12 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         if (scrollerRef.current) {
           const scrollTop = scrollerRef.current.scrollTop;
           const itemHeight = 24; // Updated for new item height
-          const centerIndex = Math.round(scrollTop / itemHeight);
+          const needsPaddingOffset = scrollItems.length === items.length; // No duplication
+          const paddingOffset = needsPaddingOffset ? 12 : 0;
+          
+          const centerIndex = Math.round((scrollTop + paddingOffset) / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
-          const targetScrollTop = clampedIndex * itemHeight;
+          const targetScrollTop = (clampedIndex * itemHeight) - paddingOffset;
           
           scrollerRef.current.scrollTo({
             top: targetScrollTop,
