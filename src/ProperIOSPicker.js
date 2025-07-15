@@ -223,14 +223,22 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     const scrollTimeout = useRef(null);
     const isInitialized = useRef(false);
     
-    // For arrays with few items (like AM/PM), show both options
-    const isAmPmColumn = items.length === 2 && (items[0] === 'AM' || items[0] === 'PM');
-    const scrollItems = items; // Show all items including both AM and PM
+    // Create proper scrollable items with padding for small arrays only
+    const scrollItems = items.length <= 12 ? 
+      // For small arrays (AM/PM, hours), add padding items for proper scrolling
+      [...items, ...items, ...items, ...items, ...items] :
+      items;
 
     useEffect(() => {
       if (scrollerRef.current && !isScrolling.current) {
         // Find the first occurrence of the selected value in scrollItems
-        const selectedIndex = scrollItems.findIndex(item => item === selectedValue);
+        const selectedIndex = scrollItems.findIndex(item => {
+          if (typeof item === 'object' && item.value !== undefined) {
+            return item.value === selectedValue || item.label === selectedValue;
+          }
+          return item === selectedValue;
+        });
+        
         if (selectedIndex >= 0) {
           const scrollTop = selectedIndex * 24; // Updated for new item height
           if (isInitialized.current) {
@@ -239,9 +247,13 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
               behavior: 'smooth'
             });
           } else {
-            // Initial position without animation
-            scrollerRef.current.scrollTop = scrollTop;
-            isInitialized.current = true;
+            // Initial position without animation - use requestAnimationFrame to ensure DOM is ready
+            requestAnimationFrame(() => {
+              if (scrollerRef.current) {
+                scrollerRef.current.scrollTop = scrollTop;
+                isInitialized.current = true;
+              }
+            });
           }
         }
       }
@@ -270,8 +282,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
             behavior: 'smooth'
           });
           
-          if (scrollItems[clampedIndex] !== selectedValue) {
-            onChange(scrollItems[clampedIndex]);
+          const newValue = scrollItems[clampedIndex];
+          if (newValue !== selectedValue) {
+            onChange(newValue);
           }
         }
       }, 100);
@@ -303,8 +316,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
             behavior: 'smooth'
           });
           
-          if (scrollItems[clampedIndex] !== selectedValue) {
-            onChange(scrollItems[clampedIndex]);
+          const newValue = scrollItems[clampedIndex];
+          if (newValue !== selectedValue) {
+            onChange(newValue);
           }
         }
       }, 150);
@@ -312,7 +326,13 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
 
     // Add visual feedback for wheel items based on their distance from center
     const getItemStyle = (item, index) => {
-      const isSelected = item === selectedValue;
+      let isSelected;
+      if (typeof item === 'object' && item.value !== undefined) {
+        isSelected = item.value === selectedValue || item.label === selectedValue;
+      } else {
+        isSelected = item === selectedValue;
+      }
+      
       return {
         ...styles.wheelItem,
         ...(isSelected ? styles.wheelItemSelected : {})

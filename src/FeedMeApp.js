@@ -39,19 +39,22 @@ const AddFeedingScreen = React.memo(({
   setShowDateTimePicker
 }) => (
   <div>
-    {/* Header */}
-    <div style={{...styles.header, justifyContent: 'flex-start'}}>
-      <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem'}}>
-        <X size={24} color="#6b7280" />
-      </button>
+    {/* Header - now empty */}
+    <div style={{...styles.header, justifyContent: 'center'}}>
+      {/* Header content removed - X moved to Date & Time section */}
     </div>
 
     <div style={styles.formContainer}>
       {/* Date and Time Selection */}
       <div style={styles.formSection}>
-        <div style={styles.formLabel}>
-          <Clock size={20} color="#007AFF" />
-          <label>Date & Time</label>
+        <div style={{...styles.formLabel, justifyContent: 'space-between'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+            <Clock size={20} color="#007AFF" />
+            <label>When did you start feeding?</label>
+          </div>
+          <button onClick={handleCancelFeeding} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem'}}>
+            <X size={20} color="#6b7280" />
+          </button>
         </div>
         
 
@@ -122,7 +125,7 @@ const AddFeedingScreen = React.memo(({
               setCustomOunces(e.target.value);
               setSelectedOunces(null);
             }}
-            style={styles.input}
+            style={{...styles.input, maxWidth: '120px'}}
           />
           <span style={{
             position: 'absolute',
@@ -148,7 +151,7 @@ const AddFeedingScreen = React.memo(({
           onFocus={() => console.log('Notes field focused')}
           onBlur={() => console.log('Notes field lost focus')}
           placeholder="Any additional notes..."
-          rows={3}
+          rows={2}
           style={{
             width: '100%',
             padding: '1rem',
@@ -180,12 +183,6 @@ const AddFeedingScreen = React.memo(({
           <span>{loading ? (editingFeeding ? 'Updating...' : 'Saving...') : (editingFeeding ? 'Update Feeding' : 'Save Feeding')}</span>
         </button>
         
-        <button
-          onClick={handleCancelFeeding}
-          style={styles.secondaryBtn}
-        >
-          Cancel
-        </button>
       </div>
     </div>
   </div>
