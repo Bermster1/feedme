@@ -131,13 +131,25 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       display: 'flex',
       position: 'relative',
       overflow: 'hidden',
-      padding: '0 20px'
+      padding: '0 8px'
     },
     wheelColumn: {
-      flex: 1,
       height: '100%',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      marginRight: '8px'
+    },
+    dateColumn: {
+      flex: 2.5, // Wider for date text
+    },
+    hourColumn: {
+      flex: 1,
+    },
+    minuteColumn: {
+      flex: 1,
+    },
+    periodColumn: {
+      flex: 1,
     },
     wheelScroller: {
       height: '100%',
@@ -247,7 +259,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     };
 
     return (
-      <div style={styles.wheelColumn}>
+      <div style={{height: '100%', position: 'relative'}}>
         <div style={styles.selectionOverlay}></div>
         <div 
           ref={scrollerRef}
@@ -301,32 +313,40 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           </div>
 
           <div style={styles.pickerContainer}>
-            <WheelColumn
-              items={dateOptions.map(d => d.label)}
-              selectedValue={dateOptions.find(d => d.value === selectedDate)?.label || 'Today'}
-              onChange={(label) => {
-                const option = dateOptions.find(d => d.label === label);
-                if (option) {
-                  setSelectedDate(option.value);
-                }
-              }}
-            />
-            <WheelColumn
-              items={hours}
-              selectedValue={selectedHour}
-              onChange={setSelectedHour}
-            />
-            <WheelColumn
-              items={minutes}
-              selectedValue={selectedMinute}
-              onChange={setSelectedMinute}
-              formatter={(min) => min.toString().padStart(2, '0')}
-            />
-            <WheelColumn
-              items={periods}
-              selectedValue={selectedPeriod}
-              onChange={setSelectedPeriod}
-            />
+            <div style={{...styles.wheelColumn, ...styles.dateColumn}}>
+              <WheelColumn
+                items={dateOptions.map(d => d.label)}
+                selectedValue={dateOptions.find(d => d.value === selectedDate)?.label || 'Today'}
+                onChange={(label) => {
+                  const option = dateOptions.find(d => d.label === label);
+                  if (option) {
+                    setSelectedDate(option.value);
+                  }
+                }}
+              />
+            </div>
+            <div style={{...styles.wheelColumn, ...styles.hourColumn}}>
+              <WheelColumn
+                items={hours}
+                selectedValue={selectedHour}
+                onChange={setSelectedHour}
+              />
+            </div>
+            <div style={{...styles.wheelColumn, ...styles.minuteColumn}}>
+              <WheelColumn
+                items={minutes}
+                selectedValue={selectedMinute}
+                onChange={setSelectedMinute}
+                formatter={(min) => min.toString().padStart(2, '0')}
+              />
+            </div>
+            <div style={{...styles.wheelColumn, ...styles.periodColumn}}>
+              <WheelColumn
+                items={periods}
+                selectedValue={selectedPeriod}
+                onChange={setSelectedPeriod}
+              />
+            </div>
           </div>
         </div>
       </div>
