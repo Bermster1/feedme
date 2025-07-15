@@ -57,11 +57,12 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
   const dateOptions = generateDateOptions();
   
   // Debug logging
-  console.log('ProperIOSPicker NATIVE_IOS_V3_FIXED loaded:', {
+  console.log('ProperIOSPicker COMPACT_V4 loaded:', {
     dateOptions: dateOptions.length,
     minutes: minutes.length,
     hours: hours.length,
     periods: periods.length,
+    itemHeight: '32px',
     timestamp: new Date().toISOString()
   });
 
@@ -128,21 +129,21 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
     },
     pickerContainer: {
-      height: '260px',
+      height: '216px', // Smaller height for more compact design
       backgroundColor: '#f8f9fa',
       display: 'flex',
       position: 'relative',
       overflow: 'hidden',
-      padding: '0 8px'
+      padding: '0 16px' // Better side padding
     },
     wheelColumn: {
       height: '100%',
       position: 'relative',
       overflow: 'hidden',
-      marginRight: '4px'
+      marginRight: '0' // Remove margin for better alignment
     },
     dateColumn: {
-      flex: 2.5, // Wider for date text
+      flex: 2, // Slightly smaller for better balance
     },
     hourColumn: {
       flex: 1,
@@ -157,8 +158,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       height: '100%',
       overflowY: 'scroll',
       scrollSnapType: 'y mandatory',
-      paddingTop: '110px',
-      paddingBottom: '110px',
+      paddingTop: '92px', // Adjusted for smaller item height (216px/2 - 16px)
+      paddingBottom: '92px', // Adjusted for smaller item height
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       WebkitOverflowScrolling: 'touch',
@@ -168,11 +169,11 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       willChange: 'scroll-position' // Optimize for scrolling
     },
     wheelItem: {
-      height: '40px',
+      height: '32px', // Smaller height like native iOS
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: '23px',
+      fontSize: '20px', // Smaller font size
       color: '#8e8e93',
       scrollSnapAlign: 'center',
       cursor: 'pointer',
@@ -184,21 +185,21 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     wheelItemSelected: {
       color: '#000000', // Black text for selected items like native iOS
       fontWeight: '600', // Bolder for selected items
-      fontSize: '23px'
+      fontSize: '20px' // Match the base font size for consistency
     },
     selectionOverlay: {
       position: 'absolute',
       top: '50%',
-      left: '8px',
-      right: '8px',
-      height: '40px',
-      marginTop: '-20px',
+      left: '16px',
+      right: '16px',
+      height: '32px', // Match new item height
+      marginTop: '-16px', // Half of height
       borderTop: '1px solid #c6c6c8',
       borderBottom: '1px solid #c6c6c8',
       pointerEvents: 'none',
       zIndex: 1,
       backgroundColor: 'rgba(34, 197, 94, 0.1)', // Light green background for selection area
-      borderRadius: '8px'
+      borderRadius: '6px' // Smaller radius to match
     }
   };
 
@@ -219,7 +220,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         // Find the first occurrence of the selected value in scrollItems
         const selectedIndex = scrollItems.findIndex(item => item === selectedValue);
         if (selectedIndex >= 0) {
-          const scrollTop = selectedIndex * 40;
+          const scrollTop = selectedIndex * 32; // Updated for new item height
           if (isInitialized.current) {
             scrollerRef.current.scrollTo({
               top: scrollTop,
@@ -246,7 +247,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       scrollTimeout.current = setTimeout(() => {
         if (scrollerRef.current && !isScrolling.current) {
           const scrollTop = scrollerRef.current.scrollTop;
-          const itemHeight = 40;
+          const itemHeight = 32; // Updated for new item height
           const centerIndex = Math.round(scrollTop / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
           
@@ -280,7 +281,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
         // Trigger final snap after touch ends
         if (scrollerRef.current) {
           const scrollTop = scrollerRef.current.scrollTop;
-          const itemHeight = 40;
+          const itemHeight = 32; // Updated for new item height
           const centerIndex = Math.round(scrollTop / itemHeight);
           const clampedIndex = Math.max(0, Math.min(scrollItems.length - 1, centerIndex));
           const targetScrollTop = clampedIndex * itemHeight;
