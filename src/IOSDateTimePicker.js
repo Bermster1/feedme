@@ -33,7 +33,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
   const dateOptions = generateDateOptions();
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  const minutes = Array.from({ length: 12 }, (_, i) => i * 5); // 0, 5, 10, 15, ..., 55
   const periods = ['AM', 'PM'];
 
   // Initialize picker values
@@ -50,14 +50,16 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
       // Default to current time
       const now = new Date();
       let hour = now.getHours();
-      const minute = now.getMinutes();
+      const currentMinute = now.getMinutes();
+      // Round to nearest 5-minute interval
+      const minute = Math.round(currentMinute / 5) * 5;
       const period = hour >= 12 ? 'PM' : 'AM';
       hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
       
       return {
         date: 'Today',
         hour,
-        minute,
+        minute: minute === 60 ? 0 : minute, // Handle edge case where 60 rounds to 0
         period
       };
     }
@@ -67,10 +69,12 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
   useEffect(() => {
     if (initialDateTime && isOpen) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
+      // Round initialDateTime minute to nearest 5-minute interval
+      const roundedMinute = Math.round(initialDateTime.time.minute / 5) * 5;
       setPickerValue({
         date: dateOption ? dateOption.label : 'Today',
         hour: initialDateTime.time.hour,
-        minute: initialDateTime.time.minute,
+        minute: roundedMinute === 60 ? 0 : roundedMinute,
         period: initialDateTime.time.period
       });
     }
