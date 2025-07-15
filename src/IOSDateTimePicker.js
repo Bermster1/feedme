@@ -158,20 +158,30 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         }
         
         .ios-picker-container {
-          height: 216px;
+          height: 192px;
           background-color: #f8f9fa;
           position: relative;
         }
         
         .ios-picker-item {
-          height: 36px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 17px;
           color: #8e8e93;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-          transition: all 0.2s ease;
+          transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        /* Smooth scrolling for picker containers */
+        .ios-picker-container * {
+          scroll-behavior: smooth;
+        }
+        
+        /* Better momentum scrolling on iOS */
+        .ios-picker-container {
+          -webkit-overflow-scrolling: touch;
         }
         
         .ios-picker-item.selected {
@@ -184,8 +194,8 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
           top: 50%;
           left: 0;
           right: 0;
-          height: 36px;
-          margin-top: -18px;
+          height: 32px;
+          margin-top: -16px;
           border-top: 1px solid #c6c6c8;
           border-bottom: 1px solid #c6c6c8;
           background-color: rgba(34, 197, 94, 0.08);
@@ -211,8 +221,8 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
             <Picker
               value={pickerValue}
               onChange={setPickerValue}
-              height={216}
-              itemHeight={36}
+              height={192}
+              itemHeight={32}
               wheelMode="natural"
             >
               <Picker.Column name="date">
