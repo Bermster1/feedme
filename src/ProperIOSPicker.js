@@ -159,7 +159,8 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       paddingBottom: '110px',
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
-      WebkitOverflowScrolling: 'touch'
+      WebkitOverflowScrolling: 'touch',
+      isolation: 'isolate' // Prevent scroll interference between columns
     },
     wheelItem: {
       height: '40px',
@@ -177,7 +178,7 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     },
     wheelItemSelected: {
       color: '#000',
-      fontWeight: '400',
+      fontWeight: '600', // Bolder for selected items
       fontSize: '23px'
     },
     selectionOverlay: {
@@ -213,7 +214,9 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
       }
     }, [selectedValue, items]);
 
-    const handleScroll = () => {
+    const handleScroll = (e) => {
+      e.stopPropagation(); // Prevent scroll events from bubbling to other columns
+      
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
@@ -225,25 +228,29 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
           const centerIndex = Math.round(scrollTop / itemHeight);
           const clampedIndex = Math.max(0, Math.min(items.length - 1, centerIndex));
           
-          // Snap to center
-          const targetScrollTop = clampedIndex * itemHeight;
-          scrollerRef.current.scrollTo({
-            top: targetScrollTop,
-            behavior: 'smooth'
-          });
+          // Only snap if user has stopped scrolling
+          if (!isScrolling.current) {
+            const targetScrollTop = clampedIndex * itemHeight;
+            scrollerRef.current.scrollTo({
+              top: targetScrollTop,
+              behavior: 'smooth'
+            });
+          }
           
           if (items[clampedIndex] !== selectedValue) {
             onChange(items[clampedIndex]);
           }
         }
-      }, 50); // Reduced timeout for more responsive behavior
+      }, 50);
     };
 
-    const handleTouchStart = () => {
+    const handleTouchStart = (e) => {
+      e.stopPropagation();
       isScrolling.current = true;
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e) => {
+      e.stopPropagation();
       setTimeout(() => {
         isScrolling.current = false;
       }, 150);
