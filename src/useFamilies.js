@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { familyService } from './familyService'
 import { feedingService } from './feedingService'
+import { useAuth } from './AuthContext'
 
 export const useFamilies = () => {
+  const { isAuthenticated } = useAuth()
   const [families, setFamilies] = useState([])
   const [babies, setBabies] = useState([])
   const [selectedBaby, setSelectedBaby] = useState(null)
@@ -33,8 +35,10 @@ export const useFamilies = () => {
   }
 
   useEffect(() => {
-    loadData()
-  }, [])
+    if (isAuthenticated) {
+      loadData()
+    }
+  }, [isAuthenticated])
 
   // Save selected baby to localStorage
   useEffect(() => {
