@@ -12,15 +12,27 @@ const ProperIOSPicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Se
     return hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
   });
   const [selectedMinute, setSelectedMinute] = useState(() => new Date().getMinutes());
-  const [selectedPeriod, setSelectedPeriod] = useState(() => new Date().getHours() >= 12 ? 'PM' : 'AM');
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const currentHour = new Date().getHours();
+    const period = currentHour >= 12 ? 'PM' : 'AM';
+    console.log('Initial period setup:', { currentHour, period });
+    return period;
+  });
 
   // Initialize with provided date/time
   useEffect(() => {
     if (initialDateTime && isOpen) {
+      console.log('Setting from initialDateTime:', initialDateTime);
       setSelectedDate(initialDateTime.date);
       setSelectedHour(initialDateTime.time.hour);
       setSelectedMinute(initialDateTime.time.minute);
       setSelectedPeriod(initialDateTime.time.period);
+    } else if (isOpen) {
+      // Reset to current time when opening without initialDateTime
+      const now = new Date();
+      const currentPeriod = now.getHours() >= 12 ? 'PM' : 'AM';
+      console.log('Resetting to current time:', { hour: now.getHours(), period: currentPeriod });
+      setSelectedPeriod(currentPeriod);
     }
   }, [initialDateTime, isOpen]);
 
