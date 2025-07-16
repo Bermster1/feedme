@@ -290,6 +290,7 @@ const AddFeedingScreen = React.memo(({
                   }}
                   onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
                 >
+                  <div style={styles.areola}></div>
                   <div style={styles.nipple}></div>
                   <div style={styles.breastBase}></div>
                   <span style={{
@@ -313,6 +314,7 @@ const AddFeedingScreen = React.memo(({
                   }}
                   onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
                 >
+                  <div style={styles.areola}></div>
                   <div style={styles.nipple}></div>
                   <div style={styles.breastBase}></div>
                   <span style={{
@@ -1785,18 +1787,20 @@ const FeedMeApp = () => {
     sideButton: {
       backgroundColor: '#F5E6D3',
       border: 'none',
-      borderRadius: '50%',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
-      width: '120px',
-      height: '110px',
+      width: '140px',
+      height: '160px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 6px 20px rgba(245, 230, 211, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)',
+      boxShadow: '0 8px 25px rgba(245, 230, 211, 0.7), inset 0 3px 6px rgba(255, 255, 255, 0.3)',
       position: 'relative',
-      borderBottomLeftRadius: '40%',
-      borderBottomRightRadius: '40%'
+      // Natural breast shape - wider at top, narrower at bottom
+      borderRadius: '70px 70px 50px 50px / 80px 80px 120px 120px',
+      background: 'linear-gradient(145deg, #F8EAD8, #F2DCC4)',
+      // Add subtle curve definition
+      borderBottom: '2px solid rgba(232, 213, 190, 0.3)'
     },
     sideButtonText: {
       fontSize: '14px',
@@ -1804,26 +1808,40 @@ const FeedMeApp = () => {
       color: '#8B7355',
       marginTop: '20px'
     },
-    nipple: {
+    areola: {
       position: 'absolute',
-      width: '18px',
-      height: '18px',
-      backgroundColor: '#D4A574',
+      width: '45px',
+      height: '45px',
+      backgroundColor: 'rgba(200, 149, 109, 0.25)',
       borderRadius: '50%',
-      top: '30%',
+      top: '22%',
       left: '50%',
       transform: 'translateX(-50%)',
-      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)'
+      zIndex: 1
+    },
+    nipple: {
+      position: 'absolute',
+      width: '20px',
+      height: '20px',
+      backgroundColor: '#C8956D',
+      borderRadius: '50%',
+      top: '25%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)',
+      zIndex: 2
     },
     breastBase: {
       position: 'absolute',
-      bottom: '-2px',
-      left: '10%',
-      right: '10%',
-      height: '3px',
-      backgroundColor: '#E8D5BE',
-      borderRadius: '0 0 20px 20px',
-      opacity: 0.6
+      bottom: '8px',
+      left: '15%',
+      right: '15%',
+      height: '6px',
+      backgroundColor: 'rgba(232, 213, 190, 0.4)',
+      borderRadius: '50px',
+      opacity: 0.8,
+      // Add subtle under-breast fold
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
     },
     lastSideLabel: {
       marginTop: '8px'
