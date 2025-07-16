@@ -1374,9 +1374,15 @@ const FeedMeApp = () => {
     headerTop: {
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'space-between',
       gap: '0.75rem',
       marginBottom: '1rem'
+    },
+    headerLeft: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      flex: 1
     },
     headerIcon: {
       backgroundColor: '#00704a',
@@ -1386,6 +1392,18 @@ const FeedMeApp = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
+    },
+    babySelector: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      fontSize: '2rem',
+      fontWeight: 'bold',
+      color: '#1f2937',
+      padding: '0'
     },
     headerTitle: {
       fontSize: '1.5rem',
@@ -1858,70 +1876,122 @@ const FeedMeApp = () => {
   const Header = () => (
     <div style={styles.header}>
       <div style={styles.headerTop}>
-        <div style={styles.headerIcon}>
-          <Baby size={24} />
-        </div>
-        
-        {/* Baby Selector */}
-        <div style={{flex: 1, textAlign: 'center'}}>
+        <div style={styles.headerLeft}>
           {selectedBaby ? (
-            <button
-              onClick={() => setShowBabySelector(!showBabySelector)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: '#1f2937',
-                margin: '0 auto'
-              }}
-            >
-              {selectedBaby.name}
-              <ChevronDown size={20} />
-            </button>
+            <div style={{position: 'relative', flex: 1}}>
+              <button
+                onClick={() => setShowBabySelector(!showBabySelector)}
+                style={styles.babySelector}
+              >
+                {selectedBaby.name}
+                <ChevronDown size={24} />
+              </button>
+              <div style={{
+                fontSize: '1rem',
+                color: '#6b7280',
+                marginTop: '0.25rem',
+                fontWeight: 'normal'
+              }}>
+                Beb pod
+              </div>
+              
+              {/* Baby Selector Dropdown */}
+              {showBabySelector && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '0',
+                  backgroundColor: '#1f1f1f',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+                  zIndex: 10,
+                  marginTop: '0.5rem',
+                  minWidth: '280px'
+                }}>
+                  {activeBabies.map(baby => (
+                    <button
+                      key={baby.id}
+                      onClick={() => {
+                        setSelectedBaby(baby);
+                        setShowBabySelector(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '1rem 1.5rem',
+                        textAlign: 'left',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: 'white',
+                        cursor: 'pointer',
+                        borderBottom: activeBabies.indexOf(baby) < activeBabies.length - 1 ? '1px solid #333' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: '#333',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Baby size={20} color="white" />
+                      </div>
+                      <div>
+                        <div style={{fontWeight: 'bold'}}>{baby.name}</div>
+                        <div style={{fontSize: '0.9rem', color: '#999'}}>
+                          {selectedBaby?.id === baby.id ? 'Current' : 'Switch to'}
+                        </div>
+                      </div>
+                      {selectedBaby?.id === baby.id && (
+                        <div style={{marginLeft: 'auto', color: '#00704a'}}>✓</div>
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      alert('Coming soon - add a baby functionality!');
+                      setShowBabySelector(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '1rem 1.5rem',
+                      textAlign: 'left',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      fontSize: '1.1rem'
+                    }}
+                  >
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      backgroundColor: '#333',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Plus size={20} color="white" />
+                    </div>
+                    <div>
+                      <div style={{fontWeight: 'bold'}}>Add a baby</div>
+                      <div style={{fontSize: '0.9rem', color: '#999'}}>Coming soon</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <h1 style={styles.headerTitle}>Feed Me</h1>
-          )}
-          
-          {/* Baby Selector Dropdown */}
-          {showBabySelector && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: '1rem',
-              right: '1rem',
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              zIndex: 10,
-              marginTop: '0.5rem'
-            }}>
-              {activeBabies.map(baby => (
-                <button
-                  key={baby.id}
-                  onClick={() => {
-                    setSelectedBaby(baby);
-                    setShowBabySelector(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    textAlign: 'left',
-                    border: 'none',
-                    backgroundColor: selectedBaby?.id === baby.id ? '#f3f4f6' : 'white',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}
-                >
-                  {baby.name}
-                </button>
-              ))}
-            </div>
           )}
         </div>
         
