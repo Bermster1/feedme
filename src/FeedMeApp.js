@@ -291,6 +291,7 @@ const AddFeedingScreen = React.memo(({
                   onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
                 >
                   <div style={styles.nipple}></div>
+                  <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
                     color: activeTimer === 'left' ? 'white' : '#8B7355'
@@ -313,6 +314,7 @@ const AddFeedingScreen = React.memo(({
                   onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
                 >
                   <div style={styles.nipple}></div>
+                  <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
                     color: activeTimer === 'right' ? 'white' : '#8B7355'
@@ -1810,12 +1812,14 @@ const FeedMeApp = () => {
       cursor: 'pointer',
       transition: 'all 0.2s ease',
       width: '120px',
-      height: '120px',
+      height: '110px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 4px 12px rgba(245, 230, 211, 0.5)',
-      position: 'relative'
+      boxShadow: '0 6px 20px rgba(245, 230, 211, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.2)',
+      position: 'relative',
+      borderBottomLeftRadius: '40%',
+      borderBottomRightRadius: '40%'
     },
     sideButtonText: {
       fontSize: '14px',
@@ -1825,13 +1829,24 @@ const FeedMeApp = () => {
     },
     nipple: {
       position: 'absolute',
-      width: '16px',
-      height: '16px',
+      width: '18px',
+      height: '18px',
       backgroundColor: '#D4A574',
       borderRadius: '50%',
-      top: '35%',
+      top: '30%',
       left: '50%',
-      transform: 'translateX(-50%)'
+      transform: 'translateX(-50%)',
+      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)'
+    },
+    breastBase: {
+      position: 'absolute',
+      bottom: '-2px',
+      left: '10%',
+      right: '10%',
+      height: '3px',
+      backgroundColor: '#E8D5BE',
+      borderRadius: '0 0 20px 20px',
+      opacity: 0.6
     },
     lastSideLabel: {
       marginTop: '8px'
