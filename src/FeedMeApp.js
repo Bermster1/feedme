@@ -359,14 +359,7 @@ const AddFeedingScreen = React.memo(({
           <div style={styles.actionButtons}>
             <div style={styles.buttonContainer}>
               <button
-                onClick={() => {
-                  console.log('Nursing Save button clicked!');
-                  if (editingFeeding) {
-                    handleUpdateFeeding();
-                  } else {
-                    handleSaveFeeding();
-                  }
-                }}
+                onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
                 disabled={loading}
                 style={{
                   ...styles.primaryBtn,
@@ -1122,21 +1115,15 @@ const FeedMeApp = () => {
 
 
   const handleSaveFeeding = async () => {
-    console.log('handleSaveFeeding called with feedingMode:', feedingMode);
-    if (!selectedBaby) {
-      console.log('No selectedBaby, returning');
-      return;
-    }
+    if (!selectedBaby) return;
     
     if (feedingMode === 'nursing') {
       // Calculate total nursing duration in minutes
       const totalMinutes = Math.floor((leftTime + rightTime) / 60);
-      console.log('Nursing save attempt:', { leftTime, rightTime, totalMinutes });
       
       // Allow saving even with 0 time (for testing) - just need at least some interaction
       if (leftTime >= 0 && rightTime >= 0) {
         try {
-          console.log('Starting nursing save process...');
           setLoading(true);
           const hour = selectedTime.hour || 12;
           const minute = selectedTime.minute || 0;
@@ -1162,15 +1149,6 @@ const FeedMeApp = () => {
             user_notes: notes || ''
           };
           
-          console.log('About to save nursing feeding:', {
-            babyId: selectedBaby.id,
-            date: selectedDate,
-            time: timeString,
-            ounces: totalMinutes,
-            notes: JSON.stringify(nursingNotes),
-            gap: gap
-          });
-          
           const savedFeeding = await feedingService.addFeeding({
             babyId: selectedBaby.id,
             date: selectedDate,
@@ -1179,8 +1157,6 @@ const FeedMeApp = () => {
             notes: JSON.stringify(nursingNotes),
             gap: gap
           });
-          
-          console.log('Saved nursing feeding:', savedFeeding);
           
           // Insert feeding in chronological order by actual feeding time
           const newFeedingsList = [...allFeedings, savedFeeding].sort((a, b) => {
@@ -1271,6 +1247,7 @@ const FeedMeApp = () => {
       } finally {
         setLoading(false);
       }
+    }
     }
   };
 
