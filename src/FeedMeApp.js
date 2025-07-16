@@ -1115,32 +1115,103 @@ const FeedMeApp = () => {
   const handleSaveFeeding = async () => {
     if (!selectedBaby) return;
     
-    const ounces = selectedOunces || parseFloat(customOunces) || 0;
-    if (ounces > 0) {
-      try {
-        setLoading(true);
-        const hour = selectedTime.hour || 12;
-        const minute = selectedTime.minute || 0;
-        const timeString = `${hour}:${minute.toString().padStart(2, '0')} ${selectedTime.period}`;
-        
-        // Calculate gap from previous feeding
-        let gap = null;
-        if (allFeedings.length > 0) {
-          const lastFeeding = allFeedings[0]; // Most recent feeding
-          gap = calculateGapBetweenFeedings(
-            { date: getTodayDate(), time: timeString },
-            lastFeeding
-          );
+    if (feedingMode === 'nursing') {
+      // Calculate total nursing duration in minutes
+      const totalMinutes = Math.floor((leftTime + rightTime) / 60);
+      if (totalMinutes > 0 || leftTime > 0 || rightTime > 0) {
+        try {
+          setLoading(true);
+          const hour = selectedTime.hour || 12;
+          const minute = selectedTime.minute || 0;
+          const timeString = `${hour}:${minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+          
+          // Calculate gap from previous feeding
+          let gap = null;
+          if (allFeedings.length > 0) {
+            const lastFeeding = allFeedings[0]; // Most recent feeding
+            gap = calculateGapBetweenFeedings(
+              { date: getTodayDate(), time: timeString },
+              lastFeeding
+            );
+          }
+          
+          // Store nursing data in notes field as JSON
+          const nursingNotes = {
+            type: 'nursing',
+            left_seconds: leftTime,
+            right_seconds: rightTime,
+            total_minutes: totalMinutes,
+            last_side: lastSide,
+            user_notes: notes || ''
+          };
+          
+          const savedFeeding = await feedingService.addFeeding({
+            babyId: selectedBaby.id,
+            date: selectedDate,
+            time: timeString,
+            ounces: totalMinutes, // Store total minutes as "ounces" for display
+            notes: JSON.stringify(nursingNotes),
+            gap: gap
+          });
+          
+          // Insert feeding in chronological order by actual feeding time
+          const newFeedingsList = [...allFeedings, savedFeeding].sort((a, b) => {
+            const timeA = parseFeedingDateTime(a);
+            const timeB = parseFeedingDateTime(b);
+            return timeB - timeA; // Most recent first (descending chronological order)
+          });
+          
+          setAllFeedings(newFeedingsList);
+          
+          // Reset everything for next feeding
+          const now = new Date();
+          let currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          const period = currentHour >= 12 ? 'PM' : 'AM';
+          currentHour = currentHour % 12 || 12;
+          setSelectedTime({ hour: currentHour, minute: currentMinute, period });
+          
+          setSelectedDate(getLocalDateString(now));
+          setNotes('');
+          setLeftTime(0);
+          setRightTime(0);
+          setActiveTimer(null);
+          setCurrentScreen('home');
+        } catch (error) {
+          console.error('Error saving nursing session:', error);
+          setError('Failed to save nursing session');
+        } finally {
+          setLoading(false);
         }
-        
-        const savedFeeding = await feedingService.addFeeding({
-          babyId: selectedBaby.id,
-          date: selectedDate,
-          time: timeString,
-          ounces: ounces,
-          notes: notes || null,
-          gap: gap
-        });
+      }
+    } else {
+      // Original bottle feeding logic
+      const ounces = selectedOunces || parseFloat(customOunces) || 0;
+      if (ounces > 0) {
+        try {
+          setLoading(true);
+          const hour = selectedTime.hour || 12;
+          const minute = selectedTime.minute || 0;
+          const timeString = `${hour}:${minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+          
+          // Calculate gap from previous feeding
+          let gap = null;
+          if (allFeedings.length > 0) {
+            const lastFeeding = allFeedings[0]; // Most recent feeding
+            gap = calculateGapBetweenFeedings(
+              { date: getTodayDate(), time: timeString },
+              lastFeeding
+            );
+          }
+          
+          const savedFeeding = await feedingService.addFeeding({
+            babyId: selectedBaby.id,
+            date: selectedDate,
+            time: timeString,
+            ounces: ounces,
+            notes: notes || null,
+            gap: gap
+          });
         
         // Insert feeding in chronological order by actual feeding time
         const newFeedingsList = [...allFeedings, savedFeeding].sort((a, b) => {
@@ -1190,6 +1261,13 @@ const FeedMeApp = () => {
     setSelectedOunces(null);
     setCustomOunces('');
     setNotes('');
+    
+    // Reset nursing states
+    setLeftTime(0);
+    setRightTime(0);
+    setActiveTimer(null);
+    setFeedingMode('bottle');
+    
     setCurrentScreen('home');
     setEditingFeeding(null);
   };
@@ -2041,12 +2119,33 @@ const FeedMeApp = () => {
                           </div>
                           <div>
                             <p style={{fontWeight: '500', color: '#1f2937'}}>
-                              {feeding.ounces}oz bottle
+                              {(() => {
+                                // Check if this is a nursing entry
+                                try {
+                                  const nursingData = JSON.parse(feeding.notes || '{}');
+                                  if (nursingData.type === 'nursing') {
+                                    return `${feeding.ounces}m breast`;
+                                  }
+                                } catch (e) {
+                                  // Not nursing data, fallback to bottle
+                                }
+                                return `${feeding.ounces}oz bottle`;
+                              })()}
                             </p>
                             <p style={{fontSize: '0.875rem', color: '#6b7280'}}>{feeding.time}</p>
                             {feeding.notes && (
                               <p style={{fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem'}}>
-                                {feeding.notes}
+                                {(() => {
+                                  try {
+                                    const nursingData = JSON.parse(feeding.notes);
+                                    if (nursingData.type === 'nursing') {
+                                      return nursingData.user_notes || '';
+                                    }
+                                  } catch (e) {
+                                    // Not nursing data, show notes as-is
+                                  }
+                                  return feeding.notes;
+                                })()}
                               </p>
                             )}
                           </div>
