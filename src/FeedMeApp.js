@@ -282,41 +282,50 @@ const AddFeedingScreen = React.memo(({
 
             {/* Side Buttons */}
             <div style={styles.sideButtonContainer}>
-              <button 
-                style={{
-                  ...styles.sideButton,
-                  backgroundColor: activeTimer === 'left' ? '#00704a' : '#F5E6D3'
-                }}
-                onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
-              >
-                <div style={styles.nipple}></div>
-                <span style={{
-                  ...styles.sideButtonText,
-                  color: activeTimer === 'left' ? 'white' : '#8B7355'
-                }}>
-                  {activeTimer === 'left' ? 'Stop Left' : 'Start Left'}
-                </span>
-              </button>
-              <button 
-                style={{
-                  ...styles.sideButton,
-                  backgroundColor: activeTimer === 'right' ? '#00704a' : '#F5E6D3'
-                }}
-                onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
-              >
-                <div style={styles.nipple}></div>
-                <span style={{
-                  ...styles.sideButtonText,
-                  color: activeTimer === 'right' ? 'white' : '#8B7355'
-                }}>
-                  {activeTimer === 'right' ? 'Stop Right' : 'Start Right'}
-                </span>
-              </button>
-            </div>
-
-            {/* Last Side Indicator */}
-            <div style={styles.lastSideIndicator}>
-              <span style={styles.lastSideText}>Last Side: {lastSide.charAt(0).toUpperCase() + lastSide.slice(1)}</span>
+              <div style={styles.sideButtonWrapper}>
+                <button 
+                  style={{
+                    ...styles.sideButton,
+                    backgroundColor: activeTimer === 'left' ? '#00704a' : '#F5E6D3'
+                  }}
+                  onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
+                >
+                  <div style={styles.nipple}></div>
+                  <span style={{
+                    ...styles.sideButtonText,
+                    color: activeTimer === 'left' ? 'white' : '#8B7355'
+                  }}>
+                    {activeTimer === 'left' ? 'Stop Left' : 'Start Left'}
+                  </span>
+                </button>
+                {lastSide === 'left' && (
+                  <div style={styles.lastSideLabel}>
+                    <span style={styles.lastSideLabelText}>Last</span>
+                  </div>
+                )}
+              </div>
+              <div style={styles.sideButtonWrapper}>
+                <button 
+                  style={{
+                    ...styles.sideButton,
+                    backgroundColor: activeTimer === 'right' ? '#00704a' : '#F5E6D3'
+                  }}
+                  onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
+                >
+                  <div style={styles.nipple}></div>
+                  <span style={{
+                    ...styles.sideButtonText,
+                    color: activeTimer === 'right' ? 'white' : '#8B7355'
+                  }}>
+                    {activeTimer === 'right' ? 'Stop Right' : 'Start Right'}
+                  </span>
+                </button>
+                {lastSide === 'right' && (
+                  <div style={styles.lastSideLabel}>
+                    <span style={styles.lastSideLabelText}>Last</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1684,8 +1693,13 @@ const FeedMeApp = () => {
       gap: '1rem',
       marginBottom: '1rem'
     },
-    sideButton: {
+    sideButtonWrapper: {
       flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    },
+    sideButton: {
       backgroundColor: '#F5E6D3',
       border: 'none',
       borderRadius: '50%',
@@ -1696,7 +1710,6 @@ const FeedMeApp = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      margin: '0 auto',
       boxShadow: '0 4px 12px rgba(245, 230, 211, 0.5)',
       position: 'relative'
     },
@@ -1716,16 +1729,14 @@ const FeedMeApp = () => {
       left: '50%',
       transform: 'translateX(-50%)'
     },
-    lastSideIndicator: {
-      textAlign: 'center',
-      padding: '0.5rem',
-      backgroundColor: '#f3f4f6',
-      borderRadius: '6px'
+    lastSideLabel: {
+      marginTop: '8px'
     },
-    lastSideText: {
+    lastSideLabelText: {
       fontSize: '14px',
-      color: '#6b7280',
-      fontWeight: '500'
+      color: '#8B7355',
+      fontStyle: 'italic',
+      fontFamily: 'Georgia, serif'
     }
   };
 
