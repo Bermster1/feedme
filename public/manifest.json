@@ -1,0 +1,29 @@
+{
+  "short_name": "Feed Me",
+  "name": "Feed Me - Baby Feeding Tracker",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icon-192-simple.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192-simple.svg",
+      "type": "image/svg+xml", 
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#00704a",
+  "background_color": "#f7f7f7",
+  "categories": ["health", "lifestyle"],
+  "description": "Track your baby's feeding schedule with ease"
+}

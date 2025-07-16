@@ -1,0 +1,81 @@
+*   m box-sizing: border-box
+
+body {
+
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+
+/* App container */
+.feed-me-app {  max-width: 28rem;
+  margin:/
+.header 
+  backgr
+ound-color: white;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.header-icon {
+  background-color: #f43f5e;
+  padding: 0.5rem;
+  border-radius: 50%;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+/* Daily Summary */
+.daily-summary {
+  background: linear-gradient(to right, #3b82f6, #2563eb);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-text {
+  color: #dbeafe;
+  font-size: 0.875rem;
+}
+
+.summary-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Add Feeding Button */
+.add-feeding-container {
+  padding: 1rem;
+}
+
+.add-feeding-btn {
+  width: 100%;
+  background-color: #f43f5e;
+  color: white;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-conk.empty
