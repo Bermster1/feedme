@@ -357,7 +357,14 @@ const AddFeedingScreen = React.memo(({
           <div style={styles.actionButtons}>
             <div style={styles.buttonContainer}>
               <button
-                onClick={editingFeeding ? handleUpdateFeeding : handleSaveFeeding}
+                onClick={() => {
+                  console.log('Nursing Save button clicked!');
+                  if (editingFeeding) {
+                    handleUpdateFeeding();
+                  } else {
+                    handleSaveFeeding();
+                  }
+                }}
                 disabled={loading}
                 style={{
                   ...styles.primaryBtn,
@@ -1113,7 +1120,11 @@ const FeedMeApp = () => {
 
 
   const handleSaveFeeding = async () => {
-    if (!selectedBaby) return;
+    console.log('handleSaveFeeding called with feedingMode:', feedingMode);
+    if (!selectedBaby) {
+      console.log('No selectedBaby, returning');
+      return;
+    }
     
     if (feedingMode === 'nursing') {
       // Calculate total nursing duration in minutes
