@@ -2078,6 +2078,58 @@ const FeedMeApp = () => {
           </div>
         </div>
 
+        {/* Action Buttons - positioned after totals, before daily lists */}
+        <div style={{
+          display: 'flex',
+          gap: '0.75rem',
+          padding: '1rem 1rem 0 1rem'
+        }}>
+          <button 
+            onClick={() => setCurrentScreen('addFeeding')}
+            style={{
+              flex: 1,
+              backgroundColor: '#00704a',
+              color: 'white',
+              fontWeight: '600',
+              padding: '1rem',
+              borderRadius: '12px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(0, 112, 74, 0.2)'
+            }}
+          >
+            <Plus size={20} />
+            Add Feeding
+          </button>
+          <button 
+            onClick={() => setCurrentScreen('addSleep')}
+            style={{
+              flex: 1,
+              backgroundColor: '#6366f1',
+              color: 'white',
+              fontWeight: '600',
+              padding: '1rem',
+              borderRadius: '12px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)'
+            }}
+          >
+            <Bed size={20} />
+            Add Sleep
+          </button>
+        </div>
+
       {/* Error Message */}
       {error && (
         <div style={{
@@ -2247,58 +2299,6 @@ const FeedMeApp = () => {
             ))}
           </div>
         )}
-
-        {/* Action Buttons - moved from header */}
-        <div style={{
-          display: 'flex',
-          gap: '0.75rem',
-          padding: '1rem 1rem 1.5rem 1rem'
-        }}>
-          <button 
-            onClick={() => setCurrentScreen('addFeeding')}
-            style={{
-              flex: 1,
-              backgroundColor: '#00704a',
-              color: 'white',
-              fontWeight: '600',
-              padding: '1rem',
-              borderRadius: '12px',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.75rem',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              boxShadow: '0 4px 12px rgba(0, 112, 74, 0.2)'
-            }}
-          >
-            <Plus size={20} />
-            Add Feeding
-          </button>
-          <button 
-            onClick={() => setCurrentScreen('addSleep')}
-            style={{
-              flex: 1,
-              backgroundColor: '#6366f1',
-              color: 'white',
-              fontWeight: '600',
-              padding: '1rem',
-              borderRadius: '12px',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.75rem',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)'
-            }}
-          >
-            <Bed size={20} />
-            Add Sleep
-          </button>
-        </div>
       </div>
     </div>
   );
