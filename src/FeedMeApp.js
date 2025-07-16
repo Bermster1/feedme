@@ -38,7 +38,15 @@ const AddFeedingScreen = React.memo(({
   getLocalDateString,
   setShowDateTimePicker,
   feedingMode,
-  setFeedingMode
+  setFeedingMode,
+  leftTime,
+  rightTime,
+  activeTimer,
+  lastSide,
+  formatTime,
+  startLeftTimer,
+  startRightTimer,
+  stopTimer
 }) => (
   <div>
     {/* Header - now empty */}
@@ -263,28 +271,52 @@ const AddFeedingScreen = React.memo(({
             {/* Timer Display */}
             <div style={styles.timerDisplay}>
               <div style={styles.leftTimer}>
-                <span style={styles.timerTime}>0M</span>
+                <span style={styles.timerTime}>{formatTime(leftTime)}</span>
                 <span style={styles.timerLabel}>Left Side</span>
               </div>
               <div style={styles.rightTimer}>
-                <span style={styles.timerTime}>0M</span>
+                <span style={styles.timerTime}>{formatTime(rightTime)}</span>
                 <span style={styles.timerLabel}>Right Side</span>
               </div>
             </div>
 
             {/* Side Buttons */}
             <div style={styles.sideButtonContainer}>
-              <button style={styles.sideButton}>
-                <span style={styles.sideButtonText}>Start Left</span>
+              <button 
+                style={{
+                  ...styles.sideButton,
+                  backgroundColor: activeTimer === 'left' ? '#00704a' : '#F5E6D3'
+                }}
+                onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
+              >
+                <div style={styles.nipple}></div>
+                <span style={{
+                  ...styles.sideButtonText,
+                  color: activeTimer === 'left' ? 'white' : '#8B7355'
+                }}>
+                  {activeTimer === 'left' ? 'Stop Left' : 'Start Left'}
+                </span>
               </button>
-              <button style={styles.sideButton}>
-                <span style={styles.sideButtonText}>Start Right</span>
+              <button 
+                style={{
+                  ...styles.sideButton,
+                  backgroundColor: activeTimer === 'right' ? '#00704a' : '#F5E6D3'
+                }}
+                onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
+              >
+                <div style={styles.nipple}></div>
+                <span style={{
+                  ...styles.sideButtonText,
+                  color: activeTimer === 'right' ? 'white' : '#8B7355'
+                }}>
+                  {activeTimer === 'right' ? 'Stop Right' : 'Start Right'}
+                </span>
               </button>
             </div>
 
             {/* Last Side Indicator */}
             <div style={styles.lastSideIndicator}>
-              <span style={styles.lastSideText}>Last Side: Left</span>
+              <span style={styles.lastSideText}>Last Side: {lastSide.charAt(0).toUpperCase() + lastSide.slice(1)}</span>
             </div>
           </div>
 
@@ -377,9 +409,56 @@ const FeedMeApp = () => {
   // Feeding mode state (nursing or bottle)
   const [feedingMode, setFeedingMode] = useState('bottle');
   
+  // Nursing timer state
+  const [leftTime, setLeftTime] = useState(0); // in seconds
+  const [rightTime, setRightTime] = useState(0); // in seconds
+  const [activeTimer, setActiveTimer] = useState(null); // 'left', 'right', or null
+  const [lastSide, setLastSide] = useState('left');
+  
   // Calculate baby's age in weeks from birth date
   const babyAgeWeeks = selectedBaby?.birth_date ? 
     Math.floor((Date.now() - new Date(selectedBaby.birth_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 7)) : null;
+
+  // Timer interval effect
+  useEffect(() => {
+    let interval = null;
+    if (activeTimer === 'left') {
+      interval = setInterval(() => {
+        setLeftTime(time => time + 1);
+      }, 1000);
+    } else if (activeTimer === 'right') {
+      interval = setInterval(() => {
+        setRightTime(time => time + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTimer]);
+
+  // Helper function to format time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}S`;
+    if (secs === 0) return `${mins}M`;
+    return `${mins}M ${secs.toString().padStart(2, '0')}S`;
+  };
+
+  // Nursing timer functions
+  const startLeftTimer = () => {
+    setActiveTimer('left');
+    setLastSide('left');
+  };
+
+  const startRightTimer = () => {
+    setActiveTimer('right');
+    setLastSide('right');
+  };
+
+  const stopTimer = () => {
+    setActiveTimer(null);
+  };
 
   // Load feedings from Supabase when selected baby changes - FIXED VERSION
   useEffect(() => {
@@ -1607,7 +1686,7 @@ const FeedMeApp = () => {
     },
     sideButton: {
       flex: 1,
-      backgroundColor: '#00704a',
+      backgroundColor: '#F5E6D3',
       border: 'none',
       borderRadius: '50%',
       cursor: 'pointer',
@@ -1618,12 +1697,24 @@ const FeedMeApp = () => {
       alignItems: 'center',
       justifyContent: 'center',
       margin: '0 auto',
-      boxShadow: '0 4px 12px rgba(0, 112, 74, 0.3)'
+      boxShadow: '0 4px 12px rgba(245, 230, 211, 0.5)',
+      position: 'relative'
     },
     sideButtonText: {
-      fontSize: '16px',
+      fontSize: '14px',
       fontWeight: '600',
-      color: 'white'
+      color: '#8B7355',
+      marginTop: '20px'
+    },
+    nipple: {
+      position: 'absolute',
+      width: '16px',
+      height: '16px',
+      backgroundColor: '#D4A574',
+      borderRadius: '50%',
+      top: '35%',
+      left: '50%',
+      transform: 'translateX(-50%)'
     },
     lastSideIndicator: {
       textAlign: 'center',
@@ -2206,6 +2297,14 @@ const FeedMeApp = () => {
           setShowDateTimePicker={setShowDateTimePicker}
           feedingMode={feedingMode}
           setFeedingMode={setFeedingMode}
+          leftTime={leftTime}
+          rightTime={rightTime}
+          activeTimer={activeTimer}
+          lastSide={lastSide}
+          formatTime={formatTime}
+          startLeftTimer={startLeftTimer}
+          startRightTimer={startRightTimer}
+          stopTimer={stopTimer}
         />
       ) : currentScreen === 'addSleep' ? (
         <div style={{padding: '2rem', textAlign: 'center'}}>
