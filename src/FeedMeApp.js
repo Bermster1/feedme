@@ -287,7 +287,7 @@ const AddFeedingScreen = React.memo(({
                   <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
-                    color: activeTimer === 'left' ? '#00ff88' : '#8B7355',
+                    color: activeTimer === 'left' ? '#00704a' : '#8B7355',
                     fontWeight: activeTimer === 'left' ? 'bold' : '600'
                   }}>
                     {activeTimer === 'left' ? 'Tap to Stop' : 'Start Left'}
@@ -316,7 +316,7 @@ const AddFeedingScreen = React.memo(({
                   <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
-                    color: activeTimer === 'right' ? '#00ff88' : '#8B7355',
+                    color: activeTimer === 'right' ? '#00704a' : '#8B7355',
                     fontWeight: activeTimer === 'right' ? 'bold' : '600'
                   }}>
                     {activeTimer === 'right' ? 'Tap to Stop' : 'Start Right'}
@@ -1549,7 +1549,7 @@ const FeedMeApp = () => {
       color: 'white'
     },
     toggleButtonInactive: {
-      backgroundColor: 'transparent',
+      backgroundColor: '#e5e7eb',
       color: '#6b7280'
     },
     formSection: {
@@ -1897,14 +1897,6 @@ const FeedMeApp = () => {
                 {selectedBaby.name}
                 <ChevronDown size={24} />
               </button>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6b7280',
-                marginTop: '0.25rem',
-                fontWeight: 'normal'
-              }}>
-                Beb pod
-              </div>
               
               {/* Baby Selector Dropdown */}
               {showBabySelector && (
@@ -2022,58 +2014,6 @@ const FeedMeApp = () => {
           <Settings size={24} />
         </button>
       </div>
-      
-      {/* Action Buttons */}
-      {selectedBaby && (
-        <div style={{
-          display: 'flex',
-          gap: '0.75rem',
-          padding: '0 0 1rem 0'
-        }}>
-          <button 
-            onClick={() => setCurrentScreen('addFeeding')}
-            style={{
-              flex: 1,
-              backgroundColor: '#00704a',
-              color: 'white',
-              fontWeight: '600',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem'
-            }}
-          >
-            <Plus size={18} />
-            Add Feeding
-          </button>
-          <button 
-            onClick={() => setCurrentScreen('addSleep')}
-            style={{
-              flex: 1,
-              backgroundColor: '#6366f1',
-              color: 'white',
-              fontWeight: '600',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem'
-            }}
-          >
-            <Bed size={18} />
-            Add Sleep
-          </button>
-        </div>
-      )}
       
       <div style={styles.tabContainer}>
         <button
@@ -2307,6 +2247,58 @@ const FeedMeApp = () => {
             ))}
           </div>
         )}
+
+        {/* Action Buttons - moved from header */}
+        <div style={{
+          display: 'flex',
+          gap: '0.75rem',
+          padding: '1rem 1rem 1.5rem 1rem'
+        }}>
+          <button 
+            onClick={() => setCurrentScreen('addFeeding')}
+            style={{
+              flex: 1,
+              backgroundColor: '#00704a',
+              color: 'white',
+              fontWeight: '600',
+              padding: '1rem',
+              borderRadius: '12px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(0, 112, 74, 0.2)'
+            }}
+          >
+            <Plus size={20} />
+            Add Feeding
+          </button>
+          <button 
+            onClick={() => setCurrentScreen('addSleep')}
+            style={{
+              flex: 1,
+              backgroundColor: '#6366f1',
+              color: 'white',
+              fontWeight: '600',
+              padding: '1rem',
+              borderRadius: '12px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)'
+            }}
+          >
+            <Bed size={20} />
+            Add Sleep
+          </button>
+        </div>
       </div>
     </div>
   );
