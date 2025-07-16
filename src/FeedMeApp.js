@@ -1785,22 +1785,23 @@ const FeedMeApp = () => {
       alignItems: 'center'
     },
     sideButton: {
-      backgroundColor: '#F5E6D3',
+      backgroundColor: '#F5D78A',
       border: 'none',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
-      width: '140px',
-      height: '160px',
+      width: '120px',
+      height: '140px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 8px 25px rgba(245, 230, 211, 0.7), inset 0 3px 6px rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 6px 20px rgba(245, 215, 138, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)',
       position: 'relative',
-      // Natural breast shape - wider at top, narrower at bottom
-      borderRadius: '70px 70px 50px 50px / 80px 80px 120px 120px',
-      background: 'linear-gradient(145deg, #F8EAD8, #F2DCC4)',
-      // Add subtle curve definition
-      borderBottom: '2px solid rgba(232, 213, 190, 0.3)'
+      // Teardrop breast shape like the image - round at top, pointed at bottom
+      borderRadius: '60px 60px 30px 30px / 60px 60px 80px 80px',
+      background: 'radial-gradient(ellipse at 30% 30%, #F7DF9A, #F5D78A)',
+      transform: 'rotate(-5deg)',
+      // Add natural breast droop
+      clipPath: 'ellipse(60px 70px at 50% 45%)'
     },
     sideButtonText: {
       fontSize: '14px',
@@ -1810,38 +1811,37 @@ const FeedMeApp = () => {
     },
     areola: {
       position: 'absolute',
-      width: '45px',
-      height: '45px',
-      backgroundColor: 'rgba(200, 149, 109, 0.25)',
+      width: '35px',
+      height: '35px',
+      backgroundColor: 'rgba(101, 123, 131, 0.4)',
       borderRadius: '50%',
-      top: '22%',
+      top: '25%',
       left: '50%',
-      transform: 'translateX(-50%)',
+      transform: 'translateX(-50%) rotate(5deg)',
       zIndex: 1
     },
     nipple: {
       position: 'absolute',
-      width: '20px',
-      height: '20px',
-      backgroundColor: '#C8956D',
+      width: '12px',
+      height: '12px',
+      backgroundColor: '#4A5D63',
       borderRadius: '50%',
-      top: '25%',
+      top: '28%',
       left: '50%',
-      transform: 'translateX(-50%)',
-      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)',
+      transform: 'translateX(-50%) rotate(5deg)',
+      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2)',
       zIndex: 2
     },
     breastBase: {
       position: 'absolute',
-      bottom: '8px',
-      left: '15%',
-      right: '15%',
-      height: '6px',
-      backgroundColor: 'rgba(232, 213, 190, 0.4)',
-      borderRadius: '50px',
-      opacity: 0.8,
-      // Add subtle under-breast fold
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+      bottom: '15px',
+      left: '20%',
+      right: '20%',
+      height: '3px',
+      backgroundColor: 'rgba(218, 185, 127, 0.6)',
+      borderRadius: '20px',
+      opacity: 0.7,
+      transform: 'rotate(5deg)'
     },
     lastSideLabel: {
       marginTop: '8px'
