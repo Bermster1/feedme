@@ -2176,14 +2176,11 @@ const FeedMeApp = () => {
                 {/* Date Header */}
                 <div style={{
                   padding: '0.5rem 0 0.5rem 0',
-                  marginBottom: '0.75rem'
+                  marginBottom: '0.5rem'
                 }}>
                   <h2 style={{fontSize: '1rem', fontWeight: '600', color: '#1f2937'}}>
                     {formatDate(date)}
                   </h2>
-                  <p style={{fontSize: '0.875rem', color: '#6b7280'}}>
-                    {feedingsByDate[date].reduce((sum, f) => sum + f.ounces, 0)} oz total
-                  </p>
                 </div>
                 
                 {/* Feedings for this date */}
