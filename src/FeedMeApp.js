@@ -268,25 +268,17 @@ const AddFeedingScreen = React.memo(({
               <label>Nursing Timer</label>
             </div>
 
-            {/* Timer Display */}
-            <div style={styles.timerDisplay}>
-              <div style={styles.leftTimer}>
-                <span style={styles.timerTime}>{formatTime(leftTime)}</span>
-                <span style={styles.timerLabel}>Left Side</span>
-              </div>
-              <div style={styles.rightTimer}>
-                <span style={styles.timerTime}>{formatTime(rightTime)}</span>
-                <span style={styles.timerLabel}>Right Side</span>
-              </div>
-            </div>
-
             {/* Side Buttons */}
             <div style={styles.sideButtonContainer}>
               <div style={styles.sideButtonWrapper}>
                 <button 
                   style={{
                     ...styles.sideButton,
-                    backgroundColor: activeTimer === 'left' ? '#00704a' : '#F5E6D3'
+                    backgroundColor: activeTimer === 'left' ? '#00704a' : '#F5D78A',
+                    transform: activeTimer === 'left' ? 'rotate(-5deg) scale(1.05)' : 'rotate(-5deg)',
+                    boxShadow: activeTimer === 'left' 
+                      ? '0 8px 30px rgba(0, 112, 74, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2)' 
+                      : '0 6px 20px rgba(245, 215, 138, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)'
                   }}
                   onClick={activeTimer === 'left' ? stopTimer : startLeftTimer}
                 >
@@ -295,9 +287,10 @@ const AddFeedingScreen = React.memo(({
                   <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
-                    color: activeTimer === 'left' ? 'white' : '#8B7355'
+                    color: activeTimer === 'left' ? '#00ff88' : '#8B7355',
+                    fontWeight: activeTimer === 'left' ? 'bold' : '600'
                   }}>
-                    {activeTimer === 'left' ? 'Stop Left' : 'Start Left'}
+                    {activeTimer === 'left' ? 'Tap to Stop' : 'Start Left'}
                   </span>
                 </button>
                 {lastSide === 'left' && (
@@ -310,7 +303,11 @@ const AddFeedingScreen = React.memo(({
                 <button 
                   style={{
                     ...styles.sideButton,
-                    backgroundColor: activeTimer === 'right' ? '#00704a' : '#F5E6D3'
+                    backgroundColor: activeTimer === 'right' ? '#00704a' : '#F5D78A',
+                    transform: activeTimer === 'right' ? 'rotate(-5deg) scale(1.05)' : 'rotate(-5deg)',
+                    boxShadow: activeTimer === 'right' 
+                      ? '0 8px 30px rgba(0, 112, 74, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2)' 
+                      : '0 6px 20px rgba(245, 215, 138, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)'
                   }}
                   onClick={activeTimer === 'right' ? stopTimer : startRightTimer}
                 >
@@ -319,9 +316,10 @@ const AddFeedingScreen = React.memo(({
                   <div style={styles.breastBase}></div>
                   <span style={{
                     ...styles.sideButtonText,
-                    color: activeTimer === 'right' ? 'white' : '#8B7355'
+                    color: activeTimer === 'right' ? '#00ff88' : '#8B7355',
+                    fontWeight: activeTimer === 'right' ? 'bold' : '600'
                   }}>
-                    {activeTimer === 'right' ? 'Stop Right' : 'Start Right'}
+                    {activeTimer === 'right' ? 'Tap to Stop' : 'Start Right'}
                   </span>
                 </button>
                 {lastSide === 'right' && (
@@ -329,6 +327,18 @@ const AddFeedingScreen = React.memo(({
                     <span style={styles.lastSideLabelText}>Last</span>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Timer Display - moved below buttons */}
+            <div style={styles.timerDisplay}>
+              <div style={styles.leftTimer}>
+                <span style={styles.timerTime}>{formatTime(leftTime)}</span>
+                <span style={styles.timerLabel}>Left Side</span>
+              </div>
+              <div style={styles.rightTimer}>
+                <span style={styles.timerTime}>{formatTime(rightTime)}</span>
+                <span style={styles.timerLabel}>Right Side</span>
               </div>
             </div>
           </div>
@@ -1760,6 +1770,7 @@ const FeedMeApp = () => {
     timerDisplay: {
       display: 'flex',
       justifyContent: 'space-between',
+      marginTop: '1.5rem',
       marginBottom: '1.5rem',
       gap: '1rem'
     },
@@ -1794,7 +1805,7 @@ const FeedMeApp = () => {
     sideButtonContainer: {
       display: 'flex',
       gap: '1rem',
-      marginBottom: '1rem'
+      marginBottom: '0'
     },
     sideButtonWrapper: {
       flex: 1,
