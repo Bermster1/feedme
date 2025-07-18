@@ -197,10 +197,33 @@ const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
             We sent a magic link to <strong>{email}</strong>
           </p>
           <button 
-            onClick={() => setMagicLinkSent(false)}
-            style={{...styles.button, backgroundColor: '#6b7280'}}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await onSignIn(email.trim(), pendingInvite);
+                // Keep the confirmation screen showing
+              } catch (error) {
+                console.error('Resend error:', error);
+                alert('Error resending magic link. Please try again.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: 'transparent',
+              color: '#007AFF',
+              fontWeight: '400',
+              border: '1px solid #007AFF',
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+              disabled: loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}
+            }}
+            disabled={loading}
           >
-            Back to Login
+            {loading ? 'Sending...' : 'Resend link'}
           </button>
         </div>
       </div>
