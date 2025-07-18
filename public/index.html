@@ -25,15 +25,16 @@
     <title>Feed Me - Sleep through the night</title>
     
     <style>
-      /* Landing page styles - only shown before React loads */
+      /* Landing page styles - Headspace inspired design */
       .landing-page {
         display: block;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: #ffffff;
+        background-color: #f5f5f7;
         margin: 0;
         padding: 0;
+        min-height: 100vh;
       }
 
       /* Hide landing page when React app loads */
@@ -41,203 +42,279 @@
         display: none;
       }
 
-      /* Hero section */
-      .hero {
-        min-height: 100vh;
-        background-color: #00704a;
-        color: white;
-        position: relative;
-        overflow: hidden;
+      /* Header */
+      .header {
+        background-color: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
         display: flex;
+        justify-content: space-between;
         align-items: center;
       }
 
-      .hero-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-        width: 100%;
-      }
-
-      .age-badge {
-        display: inline-block;
-        background-color: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1.5rem;
-        border-radius: 25px;
-        font-size: 0.875rem;
-        margin-bottom: 2rem;
-        backdrop-filter: blur(10px);
-      }
-
-      .hero h1 {
-        font-size: 3.5rem;
-        font-weight: 700;
-        margin: 0 0 1rem 0;
-        line-height: 1.1;
-      }
-
-      .hero h2 {
-        font-size: 1.5rem;
-        font-weight: 400;
-        margin: 0 0 2.5rem 0;
-        opacity: 0.9;
-        line-height: 1.4;
-      }
-
-      .cta-button {
-        background-color: white;
-        color: #00704a;
-        border: none;
-        padding: 1rem 2.5rem;
-        font-size: 1.125rem;
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
         font-weight: 600;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-        display: inline-block;
+        color: #1d1d1f;
         text-decoration: none;
       }
 
-      .cta-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-      }
-
-      .screenshots {
-        margin-top: 4rem;
-        display: flex;
-        gap: 2rem;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .screenshot {
-        width: 300px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        padding: 1.5rem;
-        color: #1f2937;
-      }
-
-      .screenshot-header {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #00704a;
-        text-align: center;
-      }
-
-      .night-stretch {
-        background-color: #f0f9ff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        text-align: center;
-      }
-
-      .night-stretch-time {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #00704a;
-        margin: 0.5rem 0;
-      }
-
-      .night-stretch-label {
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
-
-      .feeding-gap {
-        background-color: #fef3c7;
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin: 0.5rem 0;
-        font-size: 0.875rem;
-        text-align: center;
-      }
-
-      .time-range {
-        text-align: center;
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-top: 1rem;
-      }
-
-      /* Testimonials section */
-      .testimonials {
-        background-color: #f8f9fa;
-        padding: 5rem 2rem;
-        position: relative;
-      }
-
-      .testimonials-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 3rem;
-      }
-
-      .testimonial {
-        background: white;
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        position: relative;
-      }
-
-      .testimonial-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
+      .logo-circle {
+        width: 32px;
+        height: 32px;
         background-color: #00704a;
-        margin-bottom: 1.5rem;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 24px;
-        font-weight: 600;
-      }
-
-      .testimonial-quote {
-        font-size: 1.125rem;
-        line-height: 1.6;
-        color: #1f2937;
-        margin-bottom: 1.5rem;
-        font-style: italic;
-      }
-
-      .testimonial-author {
-        font-weight: 600;
-        color: #00704a;
-        margin-bottom: 0.25rem;
-      }
-
-      .testimonial-role {
+        font-weight: 700;
         font-size: 0.875rem;
-        color: #6b7280;
+      }
+
+      .header-cta {
+        background-color: #007aff;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+
+      /* Main content */
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+        min-height: 80vh;
+      }
+
+      .content-left {
+        max-width: 500px;
+      }
+
+      .limited-time-badge {
+        display: inline-block;
+        background-color: #00704a;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+      }
+
+      .main-headline {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #1d1d1f;
+        line-height: 1.1;
+        margin: 0 0 1.5rem 0;
+      }
+
+      .main-subtext {
+        font-size: 1.25rem;
+        color: #6e6e73;
+        line-height: 1.4;
+        margin-bottom: 2.5rem;
+      }
+
+      .main-cta {
+        background-color: #1d1d1f;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .main-cta:hover {
+        background-color: #424245;
+        transform: translateY(-1px);
+      }
+
+      /* Screenshots section */
+      .content-right {
+        position: relative;
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .phone-mockup {
+        width: 280px;
+        height: 560px;
+        background: linear-gradient(145deg, #f0f0f0, #ffffff);
+        border-radius: 35px;
+        padding: 8px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        position: relative;
+        border: 1px solid #e0e0e0;
+      }
+
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        border-radius: 27px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .phone-notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 25px;
+        background: #000;
+        border-radius: 0 0 15px 15px;
+        z-index: 10;
+      }
+
+      .app-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        padding: 2rem 1rem;
+      }
+
+      .app-screen-1 {
+        background: linear-gradient(135deg, #00704a 0%, #004d33 100%);
+      }
+
+      .app-screen-2 {
+        background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+      }
+
+      .app-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .app-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .app-subtitle {
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-bottom: 2rem;
+      }
+
+      .sleep-stat {
+        background: rgba(255,255,255,0.15);
+        padding: 1rem;
+        border-radius: 15px;
+        margin: 0.5rem 0;
+        backdrop-filter: blur(10px);
+      }
+
+      .sleep-time {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #00ff88;
+      }
+
+      /* Decorative elements */
+      .decorative-elements {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .floating-element {
+        position: absolute;
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .element-1 {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        top: 10%;
+        right: 10%;
+        animation-delay: -2s;
+      }
+
+      .element-2 {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, #00704a, #48bb78);
+        bottom: 20%;
+        left: 15%;
+        animation-delay: -4s;
+      }
+
+      .element-3 {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        top: 60%;
+        right: 5%;
+        animation-delay: -1s;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
       }
 
       /* Mobile responsiveness */
       @media (max-width: 768px) {
-        .hero h1 {
+        .main-content {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+          text-align: center;
+        }
+
+        .main-headline {
           font-size: 2.5rem;
         }
 
-        .hero h2 {
-          font-size: 1.25rem;
+        .phone-mockup {
+          width: 240px;
+          height: 480px;
         }
 
-        .screenshots {
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .testimonials-container {
-          grid-template-columns: 1fr;
-          gap: 2rem;
+        .content-right {
+          height: 400px;
         }
       }
 
@@ -271,69 +348,60 @@
     
     <!-- Landing Page (shown before React loads) -->
     <div class="landing-page">
-      <section class="hero">
-        <div class="hero-content">
-          <div class="age-badge">Designed for infants 0-5 months</div>
+      <!-- Header like Headspace -->
+      <header class="header">
+        <div class="header-content">
+          <div class="logo">
+            <div class="logo-circle">S</div>
+            SleepMore
+          </div>
+          <button class="header-cta" onclick="startApp()">Start free trial</button>
+        </div>
+      </header>
+
+      <!-- Main content section -->
+      <div class="main-content">
+        <div class="content-left">
+          <div class="limited-time-badge">Designed for infants 0-5 months</div>
           
-          <h1>Sleep through the night</h1>
-          <h2>Track your feeds. Avoid nighttime wake-ups.</h2>
+          <h1 class="main-headline">Sleep through the night</h1>
           
-          <button class="cta-button" onclick="startApp()">Check it out</button>
+          <p class="main-subtext">Track your feeds. Avoid nighttime wake-ups. Feel like your best self with better sleep tracking and insights.</p>
           
-          <div class="screenshots">
-            <!-- Week 10 Screenshot -->
-            <div class="screenshot">
-              <div class="screenshot-header">Week 10</div>
-              <div class="feeding-gap">
-                Time between feeds: <strong>3h 05min</strong>
+          <button class="main-cta" onclick="startApp()">Check it out</button>
+        </div>
+
+        <div class="content-right">
+          <!-- Floating decorative elements -->
+          <div class="decorative-elements">
+            <div class="floating-element element-1"></div>
+            <div class="floating-element element-2"></div>
+            <div class="floating-element element-3"></div>
+          </div>
+
+          <!-- Main phone mockup -->
+          <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="app-content app-screen-1">
+                <div class="app-icon">🍼</div>
+                <div class="app-title">Week 11 Progress</div>
+                <div class="app-subtitle">Your baby's sleep journey</div>
+                
+                <div class="sleep-stat">
+                  <div class="sleep-time">9h 07m</div>
+                  <div>Longest nighttime stretch</div>
+                </div>
+                
+                <div class="sleep-stat">
+                  <div class="sleep-time">3h 05m</div>
+                  <div>Time between feeds</div>
+                </div>
               </div>
-              <div class="night-stretch">
-                <div class="night-stretch-label">Tonight's goal</div>
-                <div class="night-stretch-time">8h 30m</div>
-              </div>
-              <div class="time-range">7pm to 7am</div>
-            </div>
-            
-            <!-- Week 11 Screenshot -->
-            <div class="screenshot">
-              <div class="screenshot-header">Week 11</div>
-              <div class="night-stretch">
-                <div class="night-stretch-label">Longest nighttime stretch</div>
-                <div class="night-stretch-time">9h 07m</div>
-              </div>
-              <div class="feeding-gap">
-                Time between feeds: <strong>3h 15min</strong>
-              </div>
-              <div class="time-range">7pm to 7am</div>
             </div>
           </div>
         </div>
-      </section>
-      
-      <section class="testimonials">
-        <div class="testimonials-container">
-          <div class="testimonial">
-            <div class="testimonial-avatar">S</div>
-            <p class="testimonial-quote">"This app helps your baby sleep through the night faster"</p>
-            <div class="testimonial-author">Sarah</div>
-            <div class="testimonial-role">Night Doula for tech founders</div>
-          </div>
-          
-          <div class="testimonial">
-            <div class="testimonial-avatar">J</div>
-            <p class="testimonial-quote">"Sleeping through the night is about daytime feeding. I tell all my clients to track"</p>
-            <div class="testimonial-author">Julie</div>
-            <div class="testimonial-role">Night doula for celebs</div>
-          </div>
-          
-          <div class="testimonial">
-            <div class="testimonial-avatar">C</div>
-            <p class="testimonial-quote">"Most babies can go 8 hours by 8 weeks. It's the parents we need to train. This app helps you"</p>
-            <div class="testimonial-author">Claire</div>
-            <div class="testimonial-role">Bay area night nanny</div>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
     
     <!-- Loading state -->
