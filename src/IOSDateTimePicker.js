@@ -38,43 +38,45 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
 
   // Initialize picker values
   const [pickerValue, setPickerValue] = useState(() => {
-    if (initialDateTime) {
+    // Always initialize with provided values or current time
+    const now = new Date();
+    let hour = now.getHours();
+    const minute = now.getMinutes();
+    const period = hour >= 12 ? 'PM' : 'AM';
+    hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    
+    if (initialDateTime && initialDateTime.time) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
       return {
         date: dateOption ? dateOption.label : 'Today',
-        hour: initialDateTime.time.hour,
-        minute: initialDateTime.time.minute,
-        period: initialDateTime.time.period
-      };
-    } else {
-      // Default to current time
-      const now = new Date();
-      let hour = now.getHours();
-      const minute = now.getMinutes();
-      const period = hour >= 12 ? 'PM' : 'AM';
-      hour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-      
-      return {
-        date: 'Today',
-        hour,
-        minute,
-        period
+        hour: initialDateTime.time.hour || hour,
+        minute: initialDateTime.time.minute !== undefined ? initialDateTime.time.minute : minute,
+        period: initialDateTime.time.period || period
       };
     }
+    
+    return {
+      date: 'Today',
+      hour,
+      minute,
+      period
+    };
   });
 
-  // Update picker when initialDateTime changes
+  // Update picker when modal opens with new initial values
   useEffect(() => {
-    if (initialDateTime && isOpen) {
+    if (isOpen && initialDateTime) {
       const dateOption = dateOptions.find(d => d.value === initialDateTime.date);
-      setPickerValue({
+      const newPickerValue = {
         date: dateOption ? dateOption.label : 'Today',
         hour: initialDateTime.time.hour,
         minute: initialDateTime.time.minute,
         period: initialDateTime.time.period
-      });
+      };
+      console.log('Setting picker value on open:', newPickerValue);
+      setPickerValue(newPickerValue);
     }
-  }, [initialDateTime, isOpen, dateOptions]);
+  }, [isOpen]); // Only depend on isOpen to avoid loops
 
   const handleSave = () => {
     // Convert back to the format expected by the parent
@@ -93,7 +95,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         period: pickerValue.period
       }
     });
-    onClose();
+    // Don't close here - let parent handle it after state update
   };
 
   const selections = {
@@ -183,13 +185,14 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
           font-size: 17px;
           color: #8e8e93;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-          transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+          /* Remove transition to prevent sticky scrolling */
+          /* transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1); */
         }
         
-        /* Smooth scrolling for picker containers */
-        .ios-picker-container * {
+        /* Remove smooth scrolling to prevent conflicts with picker */
+        /* .ios-picker-container * {
           scroll-behavior: smooth;
-        }
+        } */
         
         /* Better momentum scrolling on iOS */
         .ios-picker-container {
@@ -232,10 +235,15 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
             <div className="ios-picker-selection-indicator"></div>
             <Picker
               value={pickerValue}
-              onChange={setPickerValue}
+              onChange={(newValue) => {
+                console.log('Picker onChange:', newValue);
+                setPickerValue(newValue);
+              }}
               height={216}
               itemHeight={24}
               wheelMode="natural"
+              transitionDuration={150}
+              rowHeight={24}
             >
               <Picker.Column name="date">
                 {selections.date.map(option => (

@@ -114,7 +114,13 @@ const AddFeedingScreen = React.memo(({
             }}
           >
             <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-              {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+              {(() => {
+                const dateObj = new Date(selectedDate);
+                const today = new Date();
+                const isToday = dateObj.toDateString() === today.toDateString();
+                const dateStr = isToday ? 'Today' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return `${dateStr}, ${selectedTime.hour}:${selectedTime.minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+              })()}
             </span>
             <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
           </button>
@@ -254,7 +260,13 @@ const AddFeedingScreen = React.memo(({
                 }}
               >
                 <span style={{color: '#007AFF', fontSize: '1.1rem'}}>
-                  {selectedTime.hour}:{selectedTime.minute.toString().padStart(2, '0')} {selectedTime.period}
+                  {(() => {
+                    const dateObj = new Date(selectedDate);
+                    const today = new Date();
+                    const isToday = dateObj.toDateString() === today.toDateString();
+                    const dateStr = isToday ? 'Today' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return `${dateStr}, ${selectedTime.hour}:${selectedTime.minute.toString().padStart(2, '0')} ${selectedTime.period}`;
+                  })()}
                 </span>
                 <span style={{color: '#007AFF', fontSize: '1rem'}}>›</span>
               </button>
@@ -2559,10 +2571,14 @@ const FeedMeApp = () => {
         initialDateTime={{ date: selectedDate, time: selectedTime }}
         onSave={(result) => {
           console.log('IOSDateTimePicker onSave called with:', result);
+          console.log('Previous selectedDate:', selectedDate);
+          console.log('Previous selectedTime:', selectedTime);
           setSelectedDate(result.date);
           setSelectedTime(result.time);
-          console.log('Updated selectedDate:', result.date);
-          console.log('Updated selectedTime:', result.time);
+          console.log('New selectedDate:', result.date);
+          console.log('New selectedTime:', result.time);
+          // Force close after save to ensure state is updated
+          setShowDateTimePicker(false);
         }}
         title="Select Date & Time"
       />
