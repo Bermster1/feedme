@@ -7,13 +7,18 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     const dates = [];
     const today = new Date();
     
-    for (let i = -2; i <= 7; i++) {
+    // Show 30 days in the past and 7 days in the future
+    for (let i = -30; i <= 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       
       let label;
       if (i === 0) {
         label = 'Today';
+      } else if (i === -1) {
+        label = 'Yesterday';
+      } else if (i === 1) {
+        label = 'Tomorrow';
       } else {
         label = date.toLocaleDateString('en-US', { 
           weekday: 'short', 
