@@ -162,13 +162,39 @@ const LoginScreen = ({ onSignIn, onRecover, inviteToken }) => {
             <div style={styles.icon}>
               <Mail size={24} />
             </div>
-            <h1 style={styles.title}>Check your email!</h1>
           </div>
-          <p style={styles.subtitle}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#1f2937',
+            marginBottom: '1.5rem',
+            lineHeight: '1.4'
+          }}>
+            A full night's sleep is now a bit closer.
+          </h2>
+          <div style={{
+            fontSize: '1.125rem',
+            color: '#4b5563',
+            marginBottom: '2rem',
+            lineHeight: '1.6'
+          }}>
+            <p style={{margin: '0 0 1rem 0'}}>
+              Go check your email.
+            </p>
+            <p style={{margin: '0 0 1rem 0'}}>
+              Tap that link.
+            </p>
+            <p style={{margin: '0'}}>
+              Create your account.
+            </p>
+          </div>
+          <p style={{
+            ...styles.subtitle, 
+            marginBottom: '2rem',
+            fontSize: '0.875rem',
+            color: '#6b7280'
+          }}>
             We sent a magic link to <strong>{email}</strong>
-          </p>
-          <p style={{...styles.subtitle, marginBottom: '2rem'}}>
-            Click the link in your email to sign in. You can close this page.
           </p>
           <button 
             onClick={() => setMagicLinkSent(false)}
