@@ -6,7 +6,8 @@ const SmoothMobilePicker = ({
   onSelectedChange, 
   itemHeight = 44,
   visibleItems = 5,
-  label
+  label,
+  fontSize = '17px'
 }) => {
   const [currentIndex, setCurrentIndex] = useState(selectedIndex);
   const [isDragging, setIsDragging] = useState(false);
@@ -250,7 +251,7 @@ const SmoothMobilePicker = ({
                   justifyContent: 'center',
                   opacity,
                   transform: `scale(${scale})`,
-                  fontSize: '17px',
+                  fontSize: fontSize,
                   fontWeight: index === currentIndex ? '600' : '400',
                   color: index === currentIndex ? '#000' : '#666',
                   pointerEvents: 'none'

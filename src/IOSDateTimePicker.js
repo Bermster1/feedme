@@ -190,10 +190,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
           </div>
 
           <div className="ios-picker-container" style={{
-            display: 'flex',
-            justifyContent: 'space-around',
-            padding: '0 20px',
-            gap: '10px'
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr 1fr 1fr', // Date gets more space
+            padding: '0 10px',
+            gap: '5px'
           }}>
             <SmoothMobilePicker
               items={selections.date}
@@ -205,6 +205,7 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
               }}
               label="Date"
               itemHeight={36}
+              fontSize="14px"
             />
             
             <SmoothMobilePicker
