@@ -81,6 +81,10 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
     const selectedDate = dateOptions.find(d => d.label === pickerValue.date);
     const dateValue = selectedDate ? selectedDate.value : dateOptions.find(d => d.label === 'Today').value;
     
+    console.log('IOSDateTimePicker handleSave:');
+    console.log('- pickerValue:', pickerValue);
+    console.log('- dateValue:', dateValue);
+    
     onSave({
       date: dateValue,
       time: {

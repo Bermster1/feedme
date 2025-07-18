@@ -1129,6 +1129,10 @@ const FeedMeApp = () => {
   const handleSaveFeeding = async () => {
     if (!selectedBaby) return;
     
+    console.log('handleSaveFeeding called with:');
+    console.log('- selectedDate:', selectedDate);
+    console.log('- selectedTime:', selectedTime);
+    
     if (feedingMode === 'nursing') {
       // Calculate total nursing duration in minutes
       const totalMinutes = Math.floor((leftTime + rightTime) / 60);
@@ -1146,7 +1150,7 @@ const FeedMeApp = () => {
           if (allFeedings.length > 0) {
             const lastFeeding = allFeedings[0]; // Most recent feeding
             gap = calculateGapBetweenFeedings(
-              { date: getTodayDate(), time: timeString },
+              { date: selectedDate, time: timeString },
               lastFeeding
             );
           }
@@ -1215,7 +1219,7 @@ const FeedMeApp = () => {
           if (allFeedings.length > 0) {
             const lastFeeding = allFeedings[0]; // Most recent feeding
             gap = calculateGapBetweenFeedings(
-              { date: getTodayDate(), time: timeString },
+              { date: selectedDate, time: timeString },
               lastFeeding
             );
           }
@@ -2554,8 +2558,11 @@ const FeedMeApp = () => {
         onClose={() => setShowDateTimePicker(false)}
         initialDateTime={{ date: selectedDate, time: selectedTime }}
         onSave={(result) => {
+          console.log('IOSDateTimePicker onSave called with:', result);
           setSelectedDate(result.date);
           setSelectedTime(result.time);
+          console.log('Updated selectedDate:', result.date);
+          console.log('Updated selectedTime:', result.time);
         }}
         title="Select Date & Time"
       />
