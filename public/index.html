@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#00704a" />
     <meta
       name="description"
-      content="Feed Me - Track your baby's feeding schedule with ease"
+      content="Track your feeds. Avoid nighttime wake-ups. Help your baby sleep through the night."
     />
     
     <!-- iOS Meta Tags -->
@@ -22,11 +22,344 @@
     <!-- Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
-    <title>Feed Me - Baby Feeding Tracker</title>
+    <title>Feed Me - Sleep through the night</title>
+    
+    <style>
+      /* Landing page styles - only shown before React loads */
+      .landing-page {
+        display: block;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Hide landing page when React app loads */
+      body.react-loaded .landing-page {
+        display: none;
+      }
+
+      /* Hero section */
+      .hero {
+        min-height: 100vh;
+        background-color: #00704a;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+      }
+
+      .hero-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        width: 100%;
+      }
+
+      .age-badge {
+        display: inline-block;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        line-height: 1.1;
+      }
+
+      .hero h2 {
+        font-size: 1.5rem;
+        font-weight: 400;
+        margin: 0 0 2.5rem 0;
+        opacity: 0.9;
+        line-height: 1.4;
+      }
+
+      .cta-button {
+        background-color: white;
+        color: #00704a;
+        border: none;
+        padding: 1rem 2.5rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: inline-block;
+        text-decoration: none;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .screenshots {
+        margin-top: 4rem;
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .screenshot {
+        width: 300px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        color: #1f2937;
+      }
+
+      .screenshot-header {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #00704a;
+        text-align: center;
+      }
+
+      .night-stretch {
+        background-color: #f0f9ff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+
+      .night-stretch-time {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #00704a;
+        margin: 0.5rem 0;
+      }
+
+      .night-stretch-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      .feeding-gap {
+        background-color: #fef3c7;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        font-size: 0.875rem;
+        text-align: center;
+      }
+
+      .time-range {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 1rem;
+      }
+
+      /* Testimonials section */
+      .testimonials {
+        background-color: #f8f9fa;
+        padding: 5rem 2rem;
+        position: relative;
+      }
+
+      .testimonials-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 3rem;
+      }
+
+      .testimonial {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        position: relative;
+      }
+
+      .testimonial-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #00704a;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .testimonial-quote {
+        font-size: 1.125rem;
+        line-height: 1.6;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        font-style: italic;
+      }
+
+      .testimonial-author {
+        font-weight: 600;
+        color: #00704a;
+        margin-bottom: 0.25rem;
+      }
+
+      .testimonial-role {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero h2 {
+          font-size: 1.25rem;
+        }
+
+        .screenshots {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .testimonials-container {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+      }
+
+      /* Loading state */
+      .loading {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.125rem;
+        color: #6b7280;
+      }
+
+      body.react-loading .loading {
+        display: flex;
+      }
+
+      body.react-loading .landing-page {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <!-- Landing Page (shown before React loads) -->
+    <div class="landing-page">
+      <section class="hero">
+        <div class="hero-content">
+          <div class="age-badge">Designed for infants 0-5 months</div>
+          
+          <h1>Sleep through the night</h1>
+          <h2>Track your feeds. Avoid nighttime wake-ups.</h2>
+          
+          <button class="cta-button" onclick="startApp()">Check it out</button>
+          
+          <div class="screenshots">
+            <!-- Week 10 Screenshot -->
+            <div class="screenshot">
+              <div class="screenshot-header">Week 10</div>
+              <div class="feeding-gap">
+                Time between feeds: <strong>3h 05min</strong>
+              </div>
+              <div class="night-stretch">
+                <div class="night-stretch-label">Tonight's goal</div>
+                <div class="night-stretch-time">8h 30m</div>
+              </div>
+              <div class="time-range">7pm to 7am</div>
+            </div>
+            
+            <!-- Week 11 Screenshot -->
+            <div class="screenshot">
+              <div class="screenshot-header">Week 11</div>
+              <div class="night-stretch">
+                <div class="night-stretch-label">Longest nighttime stretch</div>
+                <div class="night-stretch-time">9h 07m</div>
+              </div>
+              <div class="feeding-gap">
+                Time between feeds: <strong>3h 15min</strong>
+              </div>
+              <div class="time-range">7pm to 7am</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section class="testimonials">
+        <div class="testimonials-container">
+          <div class="testimonial">
+            <div class="testimonial-avatar">S</div>
+            <p class="testimonial-quote">"This app helps your baby sleep through the night faster"</p>
+            <div class="testimonial-author">Sarah</div>
+            <div class="testimonial-role">Night Doula for tech founders</div>
+          </div>
+          
+          <div class="testimonial">
+            <div class="testimonial-avatar">J</div>
+            <p class="testimonial-quote">"Sleeping through the night is about daytime feeding. I tell all my clients to track"</p>
+            <div class="testimonial-author">Julie</div>
+            <div class="testimonial-role">Night doula for celebs</div>
+          </div>
+          
+          <div class="testimonial">
+            <div class="testimonial-avatar">C</div>
+            <p class="testimonial-quote">"Most babies can go 8 hours by 8 weeks. It's the parents we need to train. This app helps you"</p>
+            <div class="testimonial-author">Claire</div>
+            <div class="testimonial-role">Bay area night nanny</div>
+          </div>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Loading state -->
+    <div class="loading">Loading Feed Me...</div>
+    
+    <!-- React app root -->
     <div id="root"></div>
+    
+    <script>
+      // Function to start the app when CTA is clicked
+      function startApp() {
+        document.body.classList.add('react-loading');
+        // React will load and replace everything
+      }
+      
+      // When React loads, it will add the react-loaded class
+      window.addEventListener('load', function() {
+        // Give React time to mount
+        setTimeout(() => {
+          if (document.getElementById('root').children.length > 0) {
+            document.body.classList.add('react-loaded');
+            document.body.classList.remove('react-loading');
+          }
+        }, 100);
+      });
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
