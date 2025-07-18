@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Picker from 'react-mobile-picker';
+import SmoothMobilePicker from './SmoothMobilePicker';
 
 const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "Select Date & Time" }) => {
   // Generate date options
@@ -171,51 +171,9 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
         }
         
         .ios-picker-container {
-          height: 216px;
+          min-height: 220px;
           background-color: #f8f9fa;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .ios-picker-item {
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 17px;
-          color: #8e8e93;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-          /* Remove transition to prevent sticky scrolling */
-          /* transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1); */
-        }
-        
-        /* Remove smooth scrolling to prevent conflicts with picker */
-        /* .ios-picker-container * {
-          scroll-behavior: smooth;
-        } */
-        
-        /* Better momentum scrolling on iOS */
-        .ios-picker-container {
-          -webkit-overflow-scrolling: touch;
-        }
-        
-        .ios-picker-item.selected {
-          color: #000;
-          font-weight: 600;
-        }
-        
-        .ios-picker-selection-indicator {
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          height: 24px;
-          margin-top: -12px;
-          border-top: 1px solid #c6c6c8;
-          border-bottom: 1px solid #c6c6c8;
-          background-color: rgba(34, 197, 94, 0.08);
-          pointer-events: none;
-          z-index: 1;
+          padding: 10px 0;
         }
       `}</style>
       
@@ -231,68 +189,59 @@ const IOSDateTimePicker = ({ isOpen, onClose, initialDateTime, onSave, title = "
             </button>
           </div>
 
-          <div className="ios-picker-container">
-            <div className="ios-picker-selection-indicator"></div>
-            <Picker
-              value={pickerValue}
-              onChange={(newValue) => {
-                console.log('Picker onChange:', newValue);
+          <div className="ios-picker-container" style={{
+            display: 'flex',
+            justifyContent: 'space-around',
+            padding: '0 20px',
+            gap: '10px'
+          }}>
+            <SmoothMobilePicker
+              items={selections.date}
+              selectedIndex={selections.date.findIndex(d => d === pickerValue.date)}
+              onSelectedChange={(index) => {
+                const newValue = { ...pickerValue, date: selections.date[index] };
+                console.log('Date picker changed:', newValue);
                 setPickerValue(newValue);
               }}
-              height={216}
-              itemHeight={24}
-              wheelMode="natural"
-              transitionDuration={150}
-              rowHeight={24}
-            >
-              <Picker.Column name="date">
-                {selections.date.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="hour">
-                {selections.hour.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="minute">
-                {selections.minute.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {String(option).padStart(2, '0')}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              
-              <Picker.Column name="period">
-                {selections.period.map(option => (
-                  <Picker.Item key={option} value={option}>
-                    {({ selected }) => (
-                      <div className={`ios-picker-item ${selected ? 'selected' : ''}`}>
-                        {option}
-                      </div>
-                    )}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-            </Picker>
+              label="Date"
+              itemHeight={36}
+            />
+            
+            <SmoothMobilePicker
+              items={hours}
+              selectedIndex={hours.findIndex(h => h === pickerValue.hour)}
+              onSelectedChange={(index) => {
+                const newValue = { ...pickerValue, hour: hours[index] };
+                console.log('Hour picker changed:', newValue);
+                setPickerValue(newValue);
+              }}
+              label="Hour"
+              itemHeight={36}
+            />
+            
+            <SmoothMobilePicker
+              items={minutes.map(m => String(m).padStart(2, '0'))}
+              selectedIndex={minutes.findIndex(m => m === pickerValue.minute)}
+              onSelectedChange={(index) => {
+                const newValue = { ...pickerValue, minute: minutes[index] };
+                console.log('Minute picker changed:', newValue);
+                setPickerValue(newValue);
+              }}
+              label="Min"
+              itemHeight={36}
+            />
+            
+            <SmoothMobilePicker
+              items={periods}
+              selectedIndex={periods.findIndex(p => p === pickerValue.period)}
+              onSelectedChange={(index) => {
+                const newValue = { ...pickerValue, period: periods[index] };
+                console.log('Period picker changed:', newValue);
+                setPickerValue(newValue);
+              }}
+              label="AM/PM"
+              itemHeight={36}
+            />
           </div>
         </div>
       </div>
