@@ -14,11 +14,32 @@ const AppContent = () => {
   const [inviteToken, setInviteToken] = useState(null);
   const [inviteProcessing, setInviteProcessing] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
 
-  // Check for invitation token in URL on load
+  // Check if user should see landing page or app
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const inviteParam = urlParams.get('invite');
+    
+    // Check if user clicked CTA or has an invite
+    let ctaClicked = false;
+    try {
+      ctaClicked = sessionStorage.getItem('landingPageCTAClicked') === 'true';
+    } catch (error) {
+      // Incognito mode or sessionStorage not available
+      console.warn('SessionStorage not available, checking URL params');
+    }
+    
+    // Show landing page unless:
+    // 1. User clicked CTA button
+    // 2. User has an invitation token
+    // 3. User is already authenticated
+    if (ctaClicked || inviteParam || isAuthenticated) {
+      setShowLandingPage(false);
+      // Hide the static landing page
+      document.body.classList.add('react-loaded');
+    }
+    
     if (inviteParam) {
       console.log('Found invitation token in URL:', inviteParam);
       setInviteToken(inviteParam);
@@ -41,7 +62,7 @@ const AppContent = () => {
         console.warn('SessionStorage not available, will rely on URL token');
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Add loading timeout to prevent infinite loading
   useEffect(() => {
@@ -118,8 +139,14 @@ const AppContent = () => {
     inviteToken: inviteToken ? inviteToken : 'none',
     inviteProcessing,
     loading,
-    loadingTimeout
+    loadingTimeout,
+    showLandingPage
   });
+
+  // If we should show the landing page, return empty (let static page show)
+  if (showLandingPage && !isAuthenticated && !inviteToken) {
+    return null; // Let the static landing page show
+  }
 
   if (loading || familiesLoading) {
     return (

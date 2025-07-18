@@ -345,6 +345,8 @@
     <script>
       // Function to start the app when CTA is clicked
       function startApp() {
+        // Set flag that user clicked CTA
+        sessionStorage.setItem('landingPageCTAClicked', 'true');
         document.body.classList.add('react-loading');
         // React will load and replace everything
       }
