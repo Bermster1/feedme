@@ -52,13 +52,11 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithMagicLink = async (email, inviteToken = null) => {
     try {
-      setLoading(true)
+      // Don't set global loading for magic link - let LoginScreen handle its own state
       return await authService.signInWithMagicLink(email, inviteToken)
     } catch (error) {
       console.error('Error signing in with magic link:', error)
       throw error
-    } finally {
-      setLoading(false)
     }
   }
 
