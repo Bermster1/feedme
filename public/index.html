@@ -577,7 +577,8 @@
         // Set flag that user clicked CTA
         sessionStorage.setItem('landingPageCTAClicked', 'true');
         document.body.classList.add('react-loading');
-        // React will load and replace everything
+        // Reload the page so React can check the flag
+        window.location.reload();
       }
       
       // When React loads, it will add the react-loaded class
